@@ -59,6 +59,9 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div>
 <script>
 let FUND=200000,TARGET=100000;const PRI=["High","Medium","Low"],ST=["Not Started","In Progress","Completed","Delayed"];
+const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
+const CATBYID={std01:"Procurement",std02:"Procurement",std03:"Procurement",std04:"Procurement",std21:"Procurement",std05:"Management",std06:"Management",std07:"Management",std08:"Buyers & Sales",std09:"Buyers & Sales",std10:"Buyers & Sales",std11:"Logistics",std12:"Accounts & Stock",std13:"Accounts & Stock",std14:"Accounts & Stock",std15:"Accounts & Stock",std16:"Accounts & Stock",std17:"Coordination",std18:"Coordination",std19:"Coordination",std20:"Coordination"};
+const catOf=t=>t.cat||CATBYID[t.recId]||"Other";
 const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[]},loaded={};
 let asg=null,mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
@@ -367,9 +370,6 @@ function after(){
  if(mgmt&&loaded.settings&&loaded.team&&setNone&&!seedDone){seedDone=true;SEED.forEach(([n,r])=>db.collection("team").doc(n.toLowerCase()).set({name:n,role:r},{noaudit:true}));db.collection("settings").doc("main").set({target:100000,fund:200000},{noaudit:true})}
  if(!genDone&&loaded.tasks&&loaded.recurring){genDone=true;genFor(td())}
 }
-const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
-const CATBYID={std01:"Procurement",std02:"Procurement",std03:"Procurement",std04:"Procurement",std21:"Procurement",std05:"Management",std06:"Management",std07:"Management",std08:"Buyers & Sales",std09:"Buyers & Sales",std10:"Buyers & Sales",std11:"Logistics",std12:"Accounts & Stock",std13:"Accounts & Stock",std14:"Accounts & Stock",std15:"Accounts & Stock",std16:"Accounts & Stock",std17:"Coordination",std18:"Coordination",std19:"Coordination",std20:"Coordination"};
-const catOf=t=>t.cat||CATBYID[t.recId]||"Other";
 const WD=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const okDay=(r,d)=>r.active!=="No"&&(!r.repeat||r.repeat==="Every day"||r.repeat===WD[new Date(d+"T00:00:00").getDay()]);
 const tplFor=d=>D.recurring.filter(r=>okDay(r,d));
