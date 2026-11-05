@@ -60,7 +60,7 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 <script>
 let FUND=200000,TARGET=100000;const PRI=["High","Medium","Low"],ST=["Not Started","In Progress","Completed","Delayed"];
 const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[]},loaded={};
-let db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
+let asg=null,mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr=n=>"₹"+Math.round(n||0).toLocaleString("en-IN");
@@ -70,20 +70,20 @@ const val=s=>(+s.qty||0)*(+s.rate||0);
 const overdue=t=>t.status!=="Completed"&&t.deadline&&new Date(t.deadline)<new Date();
 const isDelayed=t=>t.status==="Delayed"||overdue(t);
 const F={
- tasks:[["title","Task","text",1],["owners","Owners","multi",1],["date","Date","date",1],["deadline","Deadline","datetime-local",1],["priority","Priority",PRI,1],["status","Status",ST,1],["desc","Description / expected outcome","area"],["remarks","Remarks","area"],["result","Actual result","area"]],
+ tasks:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Owners","multi",1],["note","Instructions for the assigned person(s)","area"],["date","Date","date",1],["deadline","Deadline","datetime-local",1],["priority","Priority",PRI,1],["status","Status",ST,1],["desc","Description / expected outcome","area"],["remarks","Remarks","area"],["result","Actual result","area"]],
  proc:[["date","Date","date",1],["farmer","Farmer","text",1],["variety","Flower variety","text",1],["qty","Quantity","number",1],["rate","Buying rate (₹)","number",1],["quality","Quality",["A","B","C"],1],["approvedBy","Approved by","team",1]],
  sales:[["date","Date","date",1],["buyer","Buyer","text",1],["variety","Flower variety","text",1],["qty","Quantity sold","number",1],["rate","Selling rate (₹)","number",1],["person","Person responsible","team",1],["pay","Payment status",["Paid","Pending"],1],["mode","Payment mode",["Cash","UPI","Card"],1]],
  harvest:[["date","Date","date",1],["farm","Own farm / block","text",1],["variety","Flower variety","text",1],["qty","Quantity added","number",1],["rate","Cost per unit (₹, optional)","number"],["note","Note","text"]],
- recurring:[["title","Task","text",1],["owners","Owners","multi",1],["time","Deadline time","time",1],["priority","Priority",PRI,1],["desc","Description","area"],["active","Active",["Yes","No"],1]],
+ recurring:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Default owners (optional, changed each day when assigning)","multi"],["repeat","Repeats",["Every day","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],1],["time","Deadline time","time",1],["priority","Priority",PRI,1],["desc","Description","area"],["active","Active",["Yes","No"],1]],
  team:[["name","Name","text",1],["role","Responsibility","text",1]]};
-const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Recurring tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
-const ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
+const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Fixed daily tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
+const COORD=[],ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
 const COLS={
- tasks:[["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over from ${esc(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>`],["Owners",t=>esc((t.owners||[]).join(", "))],["Deadline",t=>esc((t.deadline||"").replace("T"," "))],["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":""}">${esc(t.priority)}</span>`],["Status",t=>`<span class="tag ${t.status==="Completed"?"ok":isDelayed(t)?"bad":""}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],["Notes",t=>esc([t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | "))]],
+ tasks:[["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over from ${esc(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>${t.note?`<div style="margin-top:4px"><span class="tag warn">Instruction</span> ${esc(t.note)}</div>`:""}`],["Owners",t=>(t.owners||[]).length?esc(t.owners.join(", ")):'<span class="tag bad">Unassigned</span>'],["Deadline",t=>esc((t.deadline||"").replace("T"," "))],["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":""}">${esc(t.priority)}</span>`],["Status",t=>`<span class="tag ${t.status==="Completed"?"ok":isDelayed(t)?"bad":""}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],["Notes",t=>esc([t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | "))]],
  proc:[["Farmer",r=>esc(r.farmer)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Rate",r=>inr(r.rate),1],["Quality",r=>esc(r.quality)],["Approved by",r=>esc(r.approvedBy)],["Approval",r=>r.approval==="pending"?'<span class="tag bad">Awaiting approval</span>':r.approval==="approved"?'<span class="tag ok">Approved</span>':"—"],["Total",r=>`<b>${inr(val(r))}</b>`,1]],
  sales:[["Buyer",r=>esc(r.buyer)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Rate",r=>inr(r.rate),1],["Total",r=>`<b>${inr(val(r))}</b>`,1],["By",r=>esc(r.person)],["Payment",r=>`<span class="tag ${r.pay==="Paid"?"ok":"bad"}">${esc(r.pay)}</span> ${esc(r.mode)}`]],
  harvest:[["Farm",r=>esc(r.farm)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Cost/unit",r=>+r.rate>0?inr(r.rate):"—",1],["Note",r=>esc(r.note)]],
- recurring:[["Task",r=>`<b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div>`],["Owners",r=>esc((r.owners||[]).join(", "))],["Daily by",r=>esc(r.time)],["Priority",r=>esc(r.priority)],["Active",r=>`<span class="tag ${r.active==="No"?"":"ok"}">${esc(r.active)}</span>`]],
+ recurring:[["Task",r=>`<b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div>`],["Owners",r=>esc((r.owners||[]).join(", "))],["Category",r=>esc(r.cat||CATBYID[r.id]||"Other")],["Repeats",r=>esc(r.repeat||"Every day")],["By",r=>esc(r.time)],["Priority",r=>esc(r.priority)],["Active",r=>`<span class="tag ${r.active==="No"?"":"ok"}">${esc(r.active)}</span>`]],
  team:[["Name",r=>`<b>${esc(r.name)}</b>`],["Responsibility",r=>esc(r.role)]]};
 const carried=()=>day>=td()?D.tasks.filter(t=>t.date&&t.date<day&&t.status!=="Completed"):[];
 const byDay=c=>c==="tasks"?[...D.tasks.filter(r=>!r.date||r.date===day||(r.completedOn===day&&r.status==="Completed")),...carried()]:D[c].filter(r=>!r.date||r.date===day);
@@ -115,11 +115,12 @@ function match(r){return !q||JSON.stringify(Object.values(r)).toLowerCase().incl
 
 function render(){
  if(!ready)return;
+ if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".assignbox"))return;
  memo={};
- document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&(mgmt||!ADMIN.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button></div>`;
+ document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button></div>`;
  const m=document.getElementById("main");
- const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">+ Add</button><button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
- m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${adding||editing?formHtml():""}<div id="list"></div>`);
+ const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"&&ME.member?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button><button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
+ m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${(view==="tasks"||view==="recurring")&&canClose?taskTabs():""}${view==="tasks"&&canClose?genBanner():""}${view==="recurring"&&loaded.recurring&&!D.recurring.length?`<div class="al ok">No daily tasks yet. <button class="btn s" onclick="seedTasks()">Load the standard daily tasks</button> taken from your morning-meeting notes. You can edit them afterwards.</div>`:""}${adding||editing?formHtml():""}<div id="list"></div>`);
  if(!SP[view])renderList();
 }
 const SP={home:()=>home(),stock:()=>stockV(),cash:()=>cashV(),review:()=>reviewV(),reports:()=>reportsV(),history:()=>hist(),settings:()=>settingsV(),users:()=>usersV(),audit:()=>auditV()};
@@ -256,7 +257,7 @@ function reportsV(){
  +tbl("team","Task completion by team member",[["Member","t"],["Responsibility","t"],["Assigned","n"],["Completed","n"],["Open","n"],["Delayed / overdue","n"],["Completion","p"]],tr)
  +'<p class="mut">Margin uses the average buying rate in this range (own-farm cost if no purchases). It shows “—” where no cost is known.</p>';
 }
-function go(v){view=v;adding=false;editing=null;q="";render()}
+function go(v){asg=null;view=v;adding=false;editing=null;q="";render()}
 function home(){
  const s=D.sales.filter(r=>r.date===day),p=D.proc.filter(r=>r.date===day),t=byDay("tasks");
  const sales=sum(s,val),coll=sum(s.filter(r=>r.pay==="Paid"),val),pend=sales-coll,proc=sum(p,val);
@@ -274,23 +275,36 @@ function home(){
  if(wv>0)al.push(["warn","Wastage reported: "+inr(wv)]);
  if(carried().length)al.push(["warn",`${carried().length} unfinished task(s) carried over from earlier days`]);
  const stale=byDay("tasks").filter(t=>t.status!=="Completed"&&Date.now()-(t.updatedAt||t.createdAt||0)>864e5);if(stale.length)al.push(["warn",`${stale.length} task(s) not updated in over a day: `+stale.slice(0,3).map(t=>esc(t.title)).join(", ")]);
+ const una=byDay("tasks").filter(t=>!(t.owners||[]).length);if(una.length)al.push(["bad",`${una.length} task(s) not assigned to anyone yet`]);
  if(!al.length)al.push(["ok","No alerts for this day"]);
  return `<div class="grid">${card("Daily sales target",inr(TARGET))}${card("Actual sales",inr(sales),`<div class="bar"><i style="width:${pct}%"></i></div><div class="l">${pct.toFixed(0)}% of target</div>`)}${card("Amount collected",inr(coll))}${card("Pending collections",`<span style="color:${pend?"var(--red)":"inherit"}">${inr(pend)}</span>`)}${card("Total procurement",inr(proc),`<div class="bar ${proc>FUND?"r":""}"><i style="width:${fp}%"></i></div><div class="l">Fund limit ${inr(FUND)}</div>`)}${card("Tasks completed",done)}${card("Tasks pending",open)}${card("Carried over",carried().length,'<div class="l">Unfinished from earlier days</div>')}${card("Delayed tasks",`<span style="color:${dl?"var(--red)":"inherit"}">${dl}</span>`)}${card("Closing stock value",inr(svv))}${card("Wastage value",inr(wv))}${card("Closing cash",inr(cr.close))}</div><h3>Alerts</h3>${al.map(a=>`<div class="al ${a[0]==="ok"?"ok":a[0]==="bad"?"bad":""}">${a[1]}</div>`).join("")}`;
 }
+function rowHtml(r,cols){
+ const act=`<td class="num">${view==="proc"&&mgmt&&r.approval==="pending"?`<button class="btn s" onclick="approve('${r.id}')">Approve</button> `:""}${view==="tasks"&&canClose?`<button class="btn s" onclick="asg=(asg==='${r.id}'?null:'${r.id}');render()">Assign</button> `:""}${view==="tasks"&&!canClose&&!(r.owners||[]).includes(ME.member)?"":`<button class="btn g s" onclick="edit('${r.id}')">Edit</button>`} ${mgmt?`<button class="btn g s d" onclick="del('${r.id}')">Delete</button>`:""}</td>`;
+ let h=`<tr>${cols.map(c=>`<td class="${c[2]?"num":""}">${c[1](r)}</td>`).join("")}${act}</tr>`;
+ if(view==="tasks"&&asg===r.id)h+=`<tr><td colspan="${cols.length+1}">${assignBox(r)}</td></tr>`;
+ return h;
+}
+const assignBox=r=>`<div class="assignbox" id="as-${r.id}"><div class="chk" style="margin-bottom:10px">${names().map(n=>`<label><input type="checkbox" value="${esc(n)}" ${(r.owners||[]).includes(n)?"checked":""}>${esc(n)}</label>`).join("")}</div><textarea rows="2" placeholder="Instructions for the assigned person(s)">${esc(r.note||"")}</textarea><p style="margin:8px 0 0"><button class="btn s" onclick="saveAssign('${r.id}')">Save</button> <button class="btn g s" onclick="asg=null;render()">Close</button></p></div>`;
 function renderList(){
  const el=document.getElementById("list");if(!el)return;
- const rows=(view==="team"?D.team:byDay(view)).filter(match).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
- const cols=COLS[view];
- let foot="";
- if(view==="proc"||view==="sales")foot=`<tr><td colspan="${cols.length-1}"><b>Total</b></td><td class="num"><b>${inr(sum(rows,val))}</b></td></tr>`;
- el.innerHTML=`<div class="tw"><table><tr>${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c[2]?"num":""}">${c[1](r)}</td>`).join("")}<td class="num">${view==="proc"&&mgmt&&r.approval==="pending"?`<button class="btn s" onclick="approve('${r.id}')">Approve</button> `:""}${view==="tasks"&&!canClose&&!(r.owners||[]).includes(ME.member)?"":`<button class="btn g s" onclick="edit('${r.id}')">Edit</button>`} ${mgmt?`<button class="btn g s d" onclick="del('${r.id}')">Delete</button>`:""}</td></tr>`).join("")||`<tr><td colspan="${cols.length+1}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
+ const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
+ const cols=COLS[view],head=`<tr>${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
+ const tb=(rs,foot="")=>`<div class="tw"><table>${head}${rs.map(r=>rowHtml(r,cols)).join("")||`<tr><td colspan="${cols.length+1}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
+ if(view==="tasks"){
+  const cs=[...CATS,...new Set(rows.map(catOf).filter(c=>!CATS.includes(c)))];
+  el.innerHTML=cs.map(c=>{const g=rows.filter(r=>catOf(r)===c);return g.length?`<h3>${esc(c)} <span style="text-transform:none;letter-spacing:0;font-weight:400">· ${g.filter(r=>r.status==="Completed").length}/${g.length} done</span></h3>${tb(g)}`:""}).join("")||tb([]);
+  return;
+ }
+ const foot=(view==="proc"||view==="sales")?`<tr><td colspan="${cols.length-1}"><b>Total</b></td><td class="num"><b>${inr(sum(rows,val))}</b></td></tr>`:"";
+ el.innerHTML=tb(rows,foot);
 }
 function formHtml(){
  const r=editing?D[view].find(x=>x.id===editing)||{}:{date:day,status:"Not Started",priority:"Medium",pay:"Paid",mode:"Cash"};
  if(view==="team"&&!mgmt)return'<div class="al">Only management can edit the team.</div>';
- const f=(view==="tasks"&&!canClose&&editing?`<div class="w"><b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div></div>`:"")+F[view].map(([k,l,t,req])=>{
+ const f=(view==="tasks"&&!canClose&&editing?`<div class="w"><b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div>${r.note?`<div class="al" style="margin-top:8px"><b>Instruction:</b> ${esc(r.note)}</div>`:""}</div>`:"")+F[view].map(([k,l,t,req])=>{
   if(view==="tasks"&&!canClose&&(editing?!["status","remarks","result"].includes(k):k==="owners"))return "";
-  let i;const v=r[k]??"";
+  let i;const v=r[k]??(k==="cat"?(CATBYID[r.id]||CATBYID[r.recId]||""):"");
   if(t==="multi")i=`<div class="chk">${names().map(n=>`<label><input type="checkbox" name="${k}" value="${esc(n)}" ${(r[k]||[]).includes(n)?"checked":""}>${esc(n)}</label>`).join("")}</div>`;
   else if(t==="area")i=`<textarea name="${k}" rows="2">${esc(v)}</textarea>`;
   else if(Array.isArray(t)||t==="team"){const o=t==="team"?names():t;i=`<select name="${k}" ${req?"required":""}><option value=""></option>${o.map(n=>`<option ${n===v?"selected":""}>${esc(n)}</option>`).join("")}</select>`}
@@ -351,12 +365,61 @@ function mkdb(){
 const SEED=[["Shahid","Commercial decisions and approvals"],["Lohith","Commercial decisions and approvals"],["Narayana","Procurement, farmers, buyers and logistics"],["Teju","Procurement, farmers, buyers and logistics"],["Razik","New buyers, existing buyers and follow-ups"],["Umesh","Wholesale market sales"],["Riaz","Accounts, purchases, sales and stock reconciliation"],["Sukanya","Coordination, task assignment and follow-up"]];
 function after(){
  if(mgmt&&loaded.settings&&loaded.team&&setNone&&!seedDone){seedDone=true;SEED.forEach(([n,r])=>db.collection("team").doc(n.toLowerCase()).set({name:n,role:r},{noaudit:true}));db.collection("settings").doc("main").set({target:100000,fund:200000},{noaudit:true})}
- if(!genDone&&loaded.tasks&&loaded.recurring){genDone=true;const d=td();D.recurring.filter(r=>r.active!=="No").forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],date:d,deadline:d+"T"+(r.time||"18:00"),priority:r.priority||"Medium",status:"Not Started",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})})}
+ if(!genDone&&loaded.tasks&&loaded.recurring){genDone=true;genFor(td())}
+}
+const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
+const CATBYID={std01:"Procurement",std02:"Procurement",std03:"Procurement",std04:"Procurement",std21:"Procurement",std05:"Management",std06:"Management",std07:"Management",std08:"Buyers & Sales",std09:"Buyers & Sales",std10:"Buyers & Sales",std11:"Logistics",std12:"Accounts & Stock",std13:"Accounts & Stock",std14:"Accounts & Stock",std15:"Accounts & Stock",std16:"Accounts & Stock",std17:"Coordination",std18:"Coordination",std19:"Coordination",std20:"Coordination"};
+const catOf=t=>t.cat||CATBYID[t.recId]||"Other";
+const WD=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const okDay=(r,d)=>r.active!=="No"&&(!r.repeat||r.repeat==="Every day"||r.repeat===WD[new Date(d+"T00:00:00").getDay()]);
+const tplFor=d=>D.recurring.filter(r=>okDay(r,d));
+function genFor(d,list,force){
+ list=list||tplFor(d);
+ if(!force&&D.tasks.some(t=>t.date===d&&t.recId))return;
+ list.forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],note:"",date:d,deadline:d+"T"+(r.time||"18:00"),priority:r.priority||"Medium",status:"Not Started",cat:r.cat||CATBYID[r.id]||"Other",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})});
+}
+const SEEDT=[
+["std01","Contact farmers and confirm daily availability",["Narayana","Teju"],"09:00","Every day","High","Identify farmers and get today’s availability."],
+["std02","Check quality, quantity and buying rates (Chrysanthemum, Gerbera)",["Narayana","Teju"],"09:00","Every day","High",""],
+["std03","Note any special requirements",["Narayana","Teju"],"09:00","Every day","Medium",""],
+["std04","Submit procurement summary and get it approved",["Narayana","Teju"],"09:30","Every day","High","Farmer name, quantity, rate and demand."],
+["std05","Finalise farm / market rate and selling price",["Shahid","Lohith"],"10:00","Every day","High",""],
+["std06","Approve variety, buyer quantity and fund allocation",["Shahid","Lohith"],"10:00","Every day","High",""],
+["std07","Any other special call of the day",["Shahid","Lohith"],"17:00","Every day","Low",""],
+["std08","Follow up with dormant buyers",["Lohith"],"12:00","Every day","Medium",""],
+["std09","Find new wholesalers",["Lohith"],"12:00","Every day","Medium",""],
+["std10","Collect buyer requirements",["Lohith"],"12:00","Every day","Medium",""],
+["std11","Plan logistics as soon as orders are confirmed",["Razik","Narayana"],"12:00","Every day","High",""],
+["std12","Record all purchases and sales",["Riaz"],"18:00","Every day","High",""],
+["std13","Look after stock and reconcile",["Riaz"],"18:00","Every day","High",""],
+["std14","Reconcile bank / any account",["Riaz"],"18:00","Every day","Medium",""],
+["std15","Create and send all bills",["Riaz"],"18:00","Every day","High",""],
+["std16","Report total order value and cash collected",["Riaz"],"18:00","Every day","High",""],
+["std17","Confirm every task has an owner",["Sukanya"],"09:15","Every day","High",""],
+["std18","Record management decisions",["Sukanya"],"10:30","Every day","Medium",""],
+["std19","Follow up pending commitments and payments",["Sukanya"],"16:00","Every day","High",""],
+["std20","End-of-day report (sales)",["Sukanya"],"18:30","Every day","High",""],
+["std21","Weekly farm visit",["Narayana","Teju"],"12:00","Mon","Medium",""]];
+async function seedTasks(){
+ genDone=true;
+ const L=SEEDT.map(([id,title,owners,time,repeat,priority,desc])=>({id,title,owners,time,repeat,priority,desc,cat:CATBYID[id],active:"Yes"}));
+ try{await Promise.all(L.map(({id,...o})=>db.collection("recurring").doc(id).set(o,{noaudit:true})));genFor(td(),L.filter(r=>okDay(r,td())),true)}
+ catch(e){alert("Could not load: "+(e.code||e.message))}
+}
+function taskTabs(){return `<div class="top" style="margin-top:-8px"><button class="btn s ${view==="tasks"?"":"g"}" onclick="go('tasks')">Tasks for the day</button><button class="btn s ${view==="recurring"?"":"g"}" onclick="go('recurring')">Fixed daily task list</button></div>`}
+function genBanner(){
+ const T=D.tasks.filter(t=>t.date===day),miss=(day>td()||(day===td()&&!T.some(t=>t.recId)))?tplFor(day).filter(r=>!D.tasks.some(t=>t.id===`r_${r.id}_${day}`)):[],un=byDay("tasks").filter(t=>!(t.owners||[]).length).length;
+ return (miss.length?`<div class="al"><b>${miss.length}</b> fixed task(s) for this day are not created yet. <button class="btn s" onclick="genFor(day,null,true)">Create them</button></div>`:"")+(un?`<div class="al bad">${un} task(s) not assigned yet. Press Assign on each one.</div>`:"");
+}
+async function saveAssign(id){
+ const c=document.getElementById("as-"+id),t=D.tasks.find(x=>x.id===id);if(!c||!t)return;
+ const owners=[...c.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value),note=c.querySelector("textarea").value.trim(),{id:_i,...o}=t;
+ try{await db.collection("tasks").doc(id).set({...o,owners,note,updatedAt:Date.now()});asg=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
 }
 function stopAll(){unsubs.forEach(f=>f());unsubs=[];Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
 function loginScreen(){screen(`<h1>LR Farms</h1><p class="mut">Daily Operations · sign in</p><div class="form"><label>Email</label><input id="le" type="email" autocomplete="username"><label style="margin-top:10px;display:block">Password</label><input id="lp" type="password" autocomplete="current-password"><p><button class="btn" onclick="doLogin()">Sign in</button> <button class="btn g" onclick="doReset()">Forgot password</button></p><p id="lm" class="mut"></p></div><p class="mut"><a href="#" onclick="doFirst();return false">First-time setup: create the admin account</a></p>`)}
-const lm=t=>{const e=document.getElementById("lm");if(e)e.textContent=t},nice=e=>/invalid-credential|wrong-password|user-not-found|invalid-email/.test(e.code)?"Wrong email or password.":(e.code||e.message);
+const lm=t=>{const e=document.getElementById("lm");if(e)e.textContent=t},nice=e=>/invalid-credential|wrong-password|user-not-found|invalid-email/.test(e.code)?"Wrong email or password. If this is the first time, use “First-time setup” below.":e.code==="auth/operation-not-allowed"?"Email/Password sign-in is not switched on in Firebase yet: Authentication → Sign-in method → Email/Password → Enable.":e.code==="auth/email-already-in-use"?"This email already has an account. Use Sign in.":(e.code||e.message);
 function doLogin(){FB.signInWithEmailAndPassword(FB.auth,document.getElementById("le").value.trim(),document.getElementById("lp").value).catch(e=>lm(nice(e)))}
 function doReset(){const v=document.getElementById("le").value.trim();if(!v)return lm("Type your email first.");FB.sendPasswordResetEmail(FB.auth,v).then(()=>lm("Password reset email sent.")).catch(e=>lm(nice(e)))}
 function doFirst(){
@@ -376,7 +439,7 @@ async function start(u){
    b.set(ref,{name:pendingName||u.email.split("@")[0],email:u.email,role:"management",createdAt:Date.now()});
    await b.commit();s=await FB.getDoc(ref);
   }
-  const x=s.data();ME={uid:u.uid,name:x.name,email:u.email,member:x.member||""};ROLE=x.role;mgmt=ROLE==="management";canClose=mgmt||ROLE==="coordinator";
+  const x=s.data();ME={uid:u.uid,name:x.name,email:u.email,member:x.member||""};ROLE=x.role;mgmt=ROLE==="management";canClose=mgmt||ROLE==="coordinator";mine=!canClose&&!!ME.member;
   db=mkdb();ready=true;document.getElementById("nav").style.display="";
   const fail=e=>{document.getElementById("main").innerHTML='<p class="al bad">Data error: '+esc(e.code||e.message)+'. Check that the Firestore rules are published.</p>'};
   ["tasks","proc","sales","team","stock","cash","days","harvest","recurring"].forEach(c=>unsubs.push(FB.onSnapshot(FB.collection(FB.fs,c),sn=>{D[c]=sn.docs.map(d=>({id:d.id,...d.data()}));loaded[c]=true;after();render()},fail)));
