@@ -142,7 +142,7 @@ function match(r){return !q||JSON.stringify(Object.values(r)).toLowerCase().incl
 
 function render(){
  if(!ready)return;
- if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".assignbox"))return;
+ DR=keepDraft();
  memo={};
  document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button></div>`;
  const m=document.getElementById("main");
@@ -323,7 +323,11 @@ async function saveUpd(id){
  const {id:_i,...o}=t;
  try{await db.collection("tasks").doc(id).set({...o,status:st,progress:pr,updates:ups.slice(-50),completedOn:st==="Completed"?(t.completedOn||td()):"",updatedAt:Date.now()});upd=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
 }
-function renderList(){
+let DR=null;
+function keepDraft(){const b=document.querySelector(".assignbox");if(!b)return null;const f=[...b.querySelectorAll("textarea,select,input")];return{id:b.id,v:f.map(x=>x.type==="checkbox"?x.checked:x.value),focus:b.contains(document.activeElement)?f.indexOf(document.activeElement):-1}}
+function restoreDraft(d){if(!d)return;const b=document.getElementById(d.id);if(!b)return;const f=[...b.querySelectorAll("textarea,select,input")];f.forEach((x,i)=>{if(d.v[i]===undefined)return;if(x.type==="checkbox")x.checked=d.v[i];else x.value=d.v[i]});const el=f[d.focus];if(el){el.focus();if(el.tagName==="TEXTAREA")el.setSelectionRange(el.value.length,el.value.length)}}
+function renderList(){const d=DR||keepDraft();DR=null;renderList0();restoreDraft(d)}
+function renderList0(){
  const el=document.getElementById("list");if(!el)return;
  const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).filter(r=>view!=="tasks"||((!fs||(fs==="Overdue"?overdue(r):r.status===fs))&&(!fpn||(r.owners||[]).includes(fpn)))).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
  const cols=COLS[view],head=`<tr>${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
@@ -485,6 +489,7 @@ async function start(u){
   render();
  }catch(e){screen(`<h1>Could not start</h1><p class="al bad">${esc(e.code||e.message)}</p><button class="btn g" onclick="FB.signOut(FB.auth)">Sign out</button>`)}
 }
+let lastToday=td();setInterval(()=>{const t=td();if(t!==lastToday){if(day===lastToday)day=t;lastToday=t;if(ready){genDone=false;after();render()}}},60000);
 (async()=>{
  await new Promise(r=>window.FB?r():addEventListener("fb-ready",r));
  FB.onAuthStateChanged(FB.auth,u=>{stopAll();u?start(u):loginScreen()});
