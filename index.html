@@ -61,8 +61,12 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 .pbar{display:inline-block;width:70px;height:6px;border-radius:4px;background:var(--line);vertical-align:middle;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
 .sm{font-size:11.5px}.inst{margin-top:6px;padding:6px 9px;border-radius:8px;background:var(--ambL);color:var(--amb);font-size:12.5px}
 .nt{margin-bottom:6px;font-size:13px}.nt b{font-weight:600}
+.selcard{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:20;display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:94vw;padding:12px 16px;box-shadow:0 12px 32px -8px rgba(28,42,36,.28)}
+.selcard select,.selcard input.bvv{width:auto;min-width:130px}
+.bgrid input,.bgrid select{padding:6px 8px;min-width:104px}.bgrid td{padding:5px 6px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--priD);color:#fff;padding:10px 18px;border-radius:10px;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}#toast.show{opacity:1}
 </style></head><body>
-<div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div>
+<div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
 let FUND=200000,TARGET=100000;const PRI=["High","Medium","Low"],ST=["Not Started","In Progress","Completed","Delayed"];
 const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
@@ -79,7 +83,7 @@ function notesHtml(t){
  return (u.length>2?`<div class="mut sm">${u.length-2} earlier update(s)</div>`:"")+u.slice(-2).map(one).join("")+(old?`<div class="mut sm">${esc(old)}</div>`:"");
 }
 const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[]},loaded={};
-let asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
+let bulk=false,brows=5,bpre=[],skipDraft=false,SEL=new Set(),VIS=[],asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr=n=>"₹"+Math.round(n||0).toLocaleString("en-IN");
@@ -142,12 +146,12 @@ function match(r){return !q||JSON.stringify(Object.values(r)).toLowerCase().incl
 
 function render(){
  if(!ready)return;
- DR=keepDraft();
+ DR=skipDraft?null:keepDraft();skipDraft=false;
  memo={};
  document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button></div>`;
  const m=document.getElementById("main");
- const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"?`<select onchange="fs=this.value;renderList()"><option value="">All status</option>${[...ST,"Overdue"].map(x=>`<option ${x===fs?"selected":""}>${x}</option>`).join("")}</select><select onchange="fpn=this.value;renderList()"><option value="">All people</option>${names().map(n=>`<option ${n===fpn?"selected":""}>${esc(n)}</option>`).join("")}</select>`:""}${view==="tasks"&&ME.member?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button><button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
- m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${(view==="tasks"||view==="recurring")&&canClose?taskTabs():""}${view==="tasks"&&canClose?genBanner():""}${view==="recurring"&&loaded.recurring&&!D.recurring.length?`<div class="al ok">No daily tasks yet. <button class="btn s" onclick="seedTasks()">Load the standard daily tasks</button> taken from your morning-meeting notes. You can edit them afterwards.</div>`:""}${adding||editing?formHtml():""}<div id="list"></div>`);
+ const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"?`<select onchange="fs=this.value;renderList()"><option value="">All status</option>${[...ST,"Overdue"].map(x=>`<option ${x===fs?"selected":""}>${x}</option>`).join("")}</select><select onchange="fpn=this.value;renderList()"><option value="">All people</option>${names().map(n=>`<option ${n===fpn?"selected":""}>${esc(n)}</option>`).join("")}</select>`:""}${view==="tasks"&&ME.member?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button>${BF[view]?'<button class="btn g" onclick="openBulk()">Bulk add</button>':""}<button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
+ m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${(view==="tasks"||view==="recurring")&&canClose?taskTabs():""}${view==="tasks"&&canClose?genBanner():""}${view==="recurring"&&loaded.recurring&&!D.recurring.length?`<div class="al ok">No daily tasks yet. <button class="btn s" onclick="seedTasks()">Load the standard daily tasks</button> taken from your morning-meeting notes. You can edit them afterwards.</div>`:""}${bulk&&BF[view]?bulkGrid():""}${adding||editing?formHtml():""}<div id="list"></div>`);
  if(!SP[view])renderList();
 }
 const SP={home:()=>home(),stock:()=>stockV(),cash:()=>cashV(),review:()=>reviewV(),reports:()=>reportsV(),history:()=>hist(),settings:()=>settingsV(),users:()=>usersV(),audit:()=>auditV()};
@@ -183,6 +187,7 @@ function stockV(){
  return stockTabs()+`<div class="grid">${kc("Closing stock value",inr(sum(SR,r=>r.close*r.rate)))}${kc("Wastage value",inr(sum(SR,r=>r.waste*r.rate)))}${kc("Unreconciled",SR.filter(r=>!r.has||Math.abs(r.diff)>0.001).length)}</div>
  <div class="tw"><table><tr><th>Variety</th><th class="num">Opening</th><th class="num">Purchased</th><th class="num">Own farm</th><th class="num">Sold</th><th class="num">Wastage</th><th class="num">Expected</th><th class="num">Physical count</th><th class="num">Difference</th><th class="num">Closing value</th></tr>
  ${SR.map((r,i)=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${inp(i,"opening",r.doc.opening,n2(r.auto))}</td><td class="num">${n2(r.bought)}</td><td class="num">${n2(r.harv)}</td><td class="num">${n2(r.sold)}</td><td class="num">${inp(i,"wastage",r.doc.wastage,"0")}</td><td class="num">${n2(r.exp)}</td><td class="num">${inp(i,"physical",r.doc.physical,"count")}</td><td class="num">${r.has?`<span class="tag ${Math.abs(r.diff)>0.001?"bad":"ok"}">${n2(r.diff)}</span>`:'<span class="tag warn">not counted</span>'}</td><td class="num">${inr(r.close*r.rate)}</td></tr>`).join("")||'<tr><td colspan="10" class="mut">No stock movement yet. Varieties appear once you record purchases or sales.</td></tr>'}</table></div>
+ ${stockTools()}
  <p class="mut">Opening stock fills from the previous day’s closing. Type a value to override it. Valued at the average buying rate. Own-farm harvest is added under “Own farm stock”.</p>`;
 }
 async function saveStock(i,f,v){
@@ -284,7 +289,7 @@ function reportsV(){
  +tbl("team","Task completion by team member",[["Member","t"],["Responsibility","t"],["Assigned","n"],["Completed","n"],["Open","n"],["Delayed / overdue","n"],["Completion","p"]],tr)
  +'<p class="mut">Margin uses the average buying rate in this range (own-farm cost if no purchases). It shows “—” where no cost is known.</p>';
 }
-function go(v){asg=null;upd=null;view=v;adding=false;editing=null;q="";render()}
+function go(v){asg=null;upd=null;bulk=false;bpre=[];SEL.clear();drawBar();view=v;adding=false;editing=null;q="";render()}
 function home(){
  const s=D.sales.filter(r=>r.date===day),p=D.proc.filter(r=>r.date===day),t=byDay("tasks");
  const sales=sum(s,val),coll=sum(s.filter(r=>r.pay==="Paid"),val),pend=sales-coll,proc=sum(p,val);
@@ -308,9 +313,9 @@ function home(){
 }
 function rowHtml(r,cols){
  const act=`<td class="num">${view==="proc"&&mgmt&&r.approval==="pending"?`<button class="btn s" onclick="approve('${r.id}')">Approve</button> `:""}${view==="tasks"&&(canClose||isMine(r))?`<button class="btn s" onclick="upd=(upd==='${r.id}'?null:'${r.id}');asg=null;render()">Update</button> `:""}${view==="tasks"&&canClose?`<button class="btn g s" onclick="asg=(asg==='${r.id}'?null:'${r.id}');upd=null;render()">Assign</button> `:""}${view==="tasks"&&!canClose?"":`<button class="btn g s" onclick="edit('${r.id}')">Edit</button>`} ${mgmt?`<button class="btn g s d" onclick="del('${r.id}')">Delete</button>`:""}</td>`;
- let h=`<tr>${cols.map(c=>`<td class="${c[2]?"num":""}">${c[1](r)}</td>`).join("")}${act}</tr>`;
- if(view==="tasks"&&asg===r.id)h+=`<tr><td colspan="${cols.length+1}">${assignBox(r)}</td></tr>`;
- if(view==="tasks"&&upd===r.id)h+=`<tr><td colspan="${cols.length+1}">${updBox(r)}</td></tr>`;
+ let h=`<tr>${BF[view]?`<td>${view!=="tasks"||canClose||isMine(r)?`<input type="checkbox" class="sel" ${SEL.has(r.id)?"checked":""} onchange="togSel('${r.id}',this.checked)">`:""}</td>`:""}${cols.map(c=>`<td class="${c[2]?"num":""}">${c[1](r)}</td>`).join("")}${act}</tr>`;
+ if(view==="tasks"&&asg===r.id)h+=`<tr><td colspan="${cols.length+ex()}">${assignBox(r)}</td></tr>`;
+ if(view==="tasks"&&upd===r.id)h+=`<tr><td colspan="${cols.length+ex()}">${updBox(r)}</td></tr>`;
  return h;
 }
 const assignBox=r=>`<div class="assignbox" id="as-${r.id}"><div class="chk" style="margin-bottom:10px">${names().map(n=>`<label><input type="checkbox" value="${esc(n)}" ${(r.owners||[]).includes(n)?"checked":""}>${esc(n)}</label>`).join("")}</div><textarea rows="2" placeholder="Instructions for the assigned person(s)">${esc(r.note||"")}</textarea><p style="margin:8px 0 0"><button class="btn s" onclick="saveAssign('${r.id}')">Save</button> <button class="btn g s" onclick="asg=null;render()">Close</button></p></div>`;
@@ -324,14 +329,15 @@ async function saveUpd(id){
  try{await db.collection("tasks").doc(id).set({...o,status:st,progress:pr,updates:ups.slice(-50),completedOn:st==="Completed"?(t.completedOn||td()):"",updatedAt:Date.now()});upd=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
 }
 let DR=null;
-function keepDraft(){const b=document.querySelector(".assignbox");if(!b)return null;const f=[...b.querySelectorAll("textarea,select,input")];return{id:b.id,v:f.map(x=>x.type==="checkbox"?x.checked:x.value),focus:b.contains(document.activeElement)?f.indexOf(document.activeElement):-1}}
-function restoreDraft(d){if(!d)return;const b=document.getElementById(d.id);if(!b)return;const f=[...b.querySelectorAll("textarea,select,input")];f.forEach((x,i)=>{if(d.v[i]===undefined)return;if(x.type==="checkbox")x.checked=d.v[i];else x.value=d.v[i]});const el=f[d.focus];if(el){el.focus();if(el.tagName==="TEXTAREA")el.setSelectionRange(el.value.length,el.value.length)}}
-function renderList(){const d=DR||keepDraft();DR=null;renderList0();restoreDraft(d)}
+function keepDraft(){const bs=[...document.querySelectorAll(".assignbox")];return bs.length?bs.map(b=>{const f=[...b.querySelectorAll("textarea,select,input")];return{id:b.id,v:f.map(x=>x.type==="checkbox"?x.checked:x.value),focus:b.contains(document.activeElement)?f.indexOf(document.activeElement):-1}}):null}
+function restoreDraft(ds){(ds||[]).forEach(d=>{const b=document.getElementById(d.id);if(!b)return;const f=[...b.querySelectorAll("textarea,select,input")];f.forEach((x,i)=>{if(d.v[i]===undefined)return;if(x.type==="checkbox")x.checked=d.v[i];else x.value=d.v[i]});const el=f[d.focus];if(el){el.focus();if(el.tagName==="TEXTAREA")el.setSelectionRange(el.value.length,el.value.length)}})}
+function renderList(){const d=DR||keepDraft();DR=null;renderList0();restoreDraft(d);drawBar()}
 function renderList0(){
  const el=document.getElementById("list");if(!el)return;
  const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).filter(r=>view!=="tasks"||((!fs||(fs==="Overdue"?overdue(r):r.status===fs))&&(!fpn||(r.owners||[]).includes(fpn)))).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
- const cols=COLS[view],head=`<tr>${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
- const tb=(rs,foot="")=>`<div class="tw"><table>${head}${rs.map(r=>rowHtml(r,cols)).join("")||`<tr><td colspan="${cols.length+1}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
+ VIS=rows.filter(r=>view!=="tasks"||canClose||isMine(r)).map(r=>r.id);SEL.forEach(id=>{if(!D[view].some(x=>x.id===id))SEL.delete(id)});
+ const cols=COLS[view],head=`<tr>${BF[view]?'<th style="width:30px"><input type="checkbox" onchange="selAll(this.checked)"></th>':""}${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
+ const tb=(rs,foot="")=>`<div class="tw"><table>${head}${rs.map(r=>rowHtml(r,cols)).join("")||`<tr><td colspan="${cols.length+ex()}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
  if(view==="tasks"){
   const cs=[...CATS,...new Set(rows.map(catOf).filter(c=>!CATS.includes(c)))];
   const tot=rows.length,dn=rows.filter(r=>r.status==="Completed").length,ap=tot?Math.round(sum(rows,pct)/tot):0;
@@ -402,7 +408,8 @@ async function approve(id){const {id:_i,...o}=D.proc.find(x=>x.id===id)||{};try{
 function mkdb(){
  const lab=x=>[x.title,x.buyer&&x.buyer+(x.variety?" · "+x.variety:""),x.farmer&&x.farmer+(x.variety?" · "+x.variety:""),x.farm&&x.farm+" · "+x.variety,x.variety,x.name,x.date].find(Boolean)||"";
  const log=(act,col,id,x)=>{FB.addDoc(FB.collection(FB.fs,"audit"),{at:Date.now(),by:ME.name,act,col,id,label:String(lab(x||{})).slice(0,80)}).catch(()=>{})};
- return{collection:c=>({doc:id=>{const r=id?FB.doc(FB.fs,c,id):FB.doc(FB.collection(FB.fs,c));return{id:r.id,
+ return{batch:()=>{const ops=[];return{add:(c,x,id)=>ops.push(["s",c,id,x]),del:(c,id)=>ops.push(["d",c,id]),commit:async(act,col,label)=>{for(let i=0;i<ops.length;i+=400){const b=FB.writeBatch(FB.fs);ops.slice(i,i+400).forEach(([t,c,id,x])=>{if(t==="s"){const r=id?FB.doc(FB.fs,c,id):FB.doc(FB.collection(FB.fs,c));b.set(r,JSON.parse(JSON.stringify(x)))}else b.delete(FB.doc(FB.fs,c,id))});await b.commit()}log(act,col,"",{title:label})}}},
+ collection:c=>({doc:id=>{const r=id?FB.doc(FB.fs,c,id):FB.doc(FB.collection(FB.fs,c));return{id:r.id,
   set:async(x,o)=>{await FB.setDoc(r,JSON.parse(JSON.stringify(x)));if(!(o&&o.noaudit))log("save",c,r.id,x)},
   delete:async()=>{const old=(D[c]||[]).find(z=>z.id===r.id)||{};await FB.deleteDoc(r);log("delete",c,r.id,old)}}}})};
 }
@@ -456,6 +463,170 @@ async function saveAssign(id){
  const c=document.getElementById("as-"+id),t=D.tasks.find(x=>x.id===id);if(!c||!t)return;
  const owners=[...c.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value),note=c.querySelector("textarea").value.trim(),{id:_i,...o}=t;
  try{await db.collection("tasks").doc(id).set({...o,owners,note,assignedBy:ME.name,assignedAt:Date.now(),updatedAt:Date.now()});asg=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
+}
+const DEF={date:"",pay:"Paid",mode:"Cash",status:"Not Started",priority:"Medium",time:"18:00",repeat:"Every day",active:"Yes",quality:"A"};
+const BF={
+ tasks:[["owners","Assign to"],["note","Instruction"],["status","Status"],["progress","Progress"],["priority","Priority"],["cat","Category"],["upnote","Add an update note"]],
+ proc:[["quality","Quality"],["approvedBy","Approved by"]],
+ sales:[["pay","Payment status"],["mode","Payment mode"],["person","Person responsible"]],
+ harvest:[["farm","Farm / block"],["note","Note"]],
+ recurring:[["cat","Category"],["owners","Default owners"],["repeat","Repeats"],["priority","Priority"],["active","Active"],["time","Deadline time"]]};
+const ex=()=>BF[view]?2:1;
+const bfFields=()=>BF[view].filter(f=>view!=="tasks"||canClose||["status","progress","upnote"].includes(f[0]));
+function toast(t){let e=document.getElementById("toast");if(!e){e=document.createElement("div");e.id="toast";document.body.appendChild(e)}e.textContent=t;e.className="show";clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="",4000)}
+function togSel(id,on){on?SEL.add(id):SEL.delete(id);drawBar()}
+function selAll(on){VIS.forEach(id=>on?SEL.add(id):SEL.delete(id));document.querySelectorAll("#list input.sel").forEach(c=>c.checked=on);drawBar()}
+function clearSel(){SEL.clear();document.querySelectorAll("#list input.sel").forEach(c=>c.checked=false);drawBar()}
+function drawBar(){
+ const el=document.getElementById("selbar");if(!el)return;
+ if(!SEL.size||!BF[view]){el.innerHTML="";return}
+ const ct=document.getElementById("selct");
+ if(ct&&el.dataset.v===view){ct.textContent=SEL.size+" selected";return}
+ el.dataset.v=view;
+ el.innerHTML=`<div class="card selcard"><b id="selct">${SEL.size} selected</b><select id="bf" onchange="drawVal()">${bfFields().map(f=>`<option value="${f[0]}">${f[1]}</option>`).join("")}</select><span id="bv"></span><button class="btn s" onclick="applyBulk()">Apply</button>${view==="proc"&&mgmt?'<button class="btn g s" onclick="bulkApprove()">Approve</button>':""}${mgmt?'<button class="btn g s d" onclick="bulkDel()">Delete</button>':""}<button class="btn g s" onclick="clearSel()">Clear</button></div>`;
+ drawVal();
+}
+function drawVal(){
+ const k=document.getElementById("bf").value,bv=document.getElementById("bv"),f=F[view].find(x=>x[0]===k),t=f&&f[2];
+ if(k==="owners")bv.innerHTML=`<span class="chk">${names().map(n=>`<label><input type="checkbox" value="${esc(n)}">${esc(n)}</label>`).join("")}</span>`;
+ else if(k==="progress")bv.innerHTML=`<select class="bvv">${[0,10,20,30,40,50,60,70,80,90,100].map(x=>`<option value="${x}">${x}%</option>`).join("")}</select>`;
+ else if(k==="upnote")bv.innerHTML='<input class="bvv" placeholder="Write about these tasks">';
+ else if(Array.isArray(t)||t==="team")bv.innerHTML=`<select class="bvv">${(t==="team"?names():t).map(n=>`<option>${esc(n)}</option>`).join("")}</select>`;
+ else bv.innerHTML=`<input class="bvv" type="${t==="time"?"time":"text"}">`;
+}
+function eligible(rows){
+ let skip=0;
+ const ok=rows.filter(r=>{if(view==="tasks"&&!canClose&&!isMine(r)){skip++;return false}if(!mgmt&&["proc","sales","harvest"].includes(view)&&isClosed(r.date)){skip++;return false}return true});
+ return{ok,skip};
+}
+async function applyBulk(){
+ const k=document.getElementById("bf").value,bv=document.getElementById("bv");
+ const val=k==="owners"?[...bv.querySelectorAll("input:checked")].map(i=>i.value):bv.querySelector(".bvv").value.trim();
+ if(k==="owners"&&view==="tasks"&&!val.length)return alert("Tick at least one person.");
+ if(k==="upnote"&&!val)return alert("Write the update first.");
+ if(view==="sales"&&k==="pay"&&val==="Pending"&&!confirm("Cash & Carry sales must be paid immediately. Mark as pending anyway?"))return;
+ const {ok,skip}=eligible([...SEL].map(id=>D[view].find(x=>x.id===id)).filter(Boolean));
+ if(!ok.length)return alert("None of the selected rows can be changed by you.");
+ const b=db.batch(),now=Date.now();
+ ok.forEach(r=>{
+  const {id,...o}=r,n={...o,updatedAt:now};
+  if(view==="tasks"){
+   if(k==="owners"){n.owners=val;n.assignedBy=ME.name;n.assignedAt=now}
+   else if(k==="status"){n.status=val;if(val==="Completed"){n.progress=100;n.completedOn=o.completedOn||td()}else{n.completedOn="";if(val==="Not Started")n.progress=0}}
+   else if(k==="progress"){const p=+val;n.progress=p;if(p===100){n.status="Completed";n.completedOn=o.completedOn||td()}else{if(o.status==="Completed"){n.status="In Progress";n.completedOn=""}else if(o.status==="Not Started"&&p>0)n.status="In Progress"}}
+   else if(k==="upnote")n.updates=[...(o.updates||[]),{by:ME.name,at:now,text:val}].slice(-50);
+   else n[k]=val;
+  }else n[k]=val;
+  b.add(view,n,id);
+ });
+ try{await b.commit("bulk edit",view,ok.length+" row(s): "+(BF[view].find(f=>f[0]===k)||[,k])[1]);clearSel();toast("Updated "+ok.length+" row(s)"+(skip?" · "+skip+" skipped (not yours or day closed)":""))}catch(e){alert("Could not save: "+(e.code||e.message))}
+}
+async function bulkApprove(){
+ const rows=[...SEL].map(id=>D.proc.find(x=>x.id===id)).filter(r=>r&&r.approval==="pending");
+ if(!rows.length)return alert("None of the selected entries are awaiting approval.");
+ const b=db.batch();rows.forEach(r=>{const {id,...o}=r;b.add("proc",{...o,approval:"approved",approvedAt:Date.now(),approvedByUser:ME.name},id)});
+ try{await b.commit("bulk approve","proc",rows.length+" entr(ies)");clearSel();toast("Approved "+rows.length)}catch(e){alert(e.code||e.message)}
+}
+async function bulkDel(){
+ if(!mgmt||!confirm("Delete "+SEL.size+" selected record(s)? This cannot be undone."))return;
+ const b=db.batch(),n=SEL.size;SEL.forEach(id=>b.del(view,id));
+ try{await b.commit("bulk delete",view,n+" row(s)");clearSel();toast("Deleted "+n)}catch(e){alert(e.code||e.message)}
+}
+/* ---------- bulk add grid ---------- */
+const bcols=()=>F[view].filter(([k])=>!(view==="tasks"&&(["remarks","result"].includes(k)||(!canClose&&k==="owners"))));
+function bcell(k,t,v){
+ v=v==null?"":v;
+ if(Array.isArray(t)||t==="team"){const o=t==="team"?names():t;return `<select class="g-${k}"><option value=""></option>${o.map(n=>`<option ${vk(n)===vk(v)?"selected":""}>${esc(n)}</option>`).join("")}</select>`}
+ if(t==="multi")return `<input class="g-${k}" placeholder="Name, Name" value="${esc(v)}">`;
+ if(t==="area")t="text";
+ return `<input class="g-${k}" type="${t}" ${t==="number"?'step="any" min="0"':""} ${SUG[k]&&t==="text"?`list="dl-${k}"`:""} value="${esc(v)}">`;
+}
+function bulkGrid(){
+ const cols=bcols(),n=Math.max(brows,bpre.length),dd=v=>({...DEF,date:day,deadline:day+"T18:00"})[v];
+ const dl=cols.filter(([k,,t])=>SUG[k]&&t==="text").map(([k])=>`<datalist id="dl-${k}">${sugg(k).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`).join("");
+ return `<div class="form assignbox" id="bulkbox"><b>Bulk add</b> <span class="mut">Type rows below, or paste from Excel/Sheets. Blank rows are ignored.</span>
+ <p class="mut" style="margin:8px 0 4px">Paste columns in this order: ${cols.map(c=>c[1]).join(" · ")}</p>
+ <textarea id="bpaste" rows="3" placeholder="Paste rows here, then press Fill grid"></textarea>
+ <p style="margin:8px 0"><button class="btn g s" type="button" onclick="fillPaste()">Fill grid</button> <button class="btn g s" type="button" onclick="moreRows()">+ 5 rows</button></p>
+ <div class="tw"><table class="bgrid"><thead><tr>${cols.map(([k,l,t,req])=>`<th>${esc(l)}${req?" *":""}</th>`).join("")}<th></th></tr></thead><tbody>${Array.from({length:n},(_,i)=>`<tr>${cols.map(([k,l,t],ci)=>{const p=bpre[i]&&bpre[i][ci];return `<td>${bcell(k,t,p!==undefined&&p!==""?p:dd(k))}</td>`}).join("")}<td><button class="btn g s" type="button" onclick="this.closest('tr').querySelectorAll('input[type=text],input[type=number],input:not([type])').forEach(x=>x.value='')">Clear</button></td></tr>`).join("")}</tbody></table></div>${dl}
+ <p style="margin:10px 0 0"><button class="btn" type="button" onclick="saveBulk()">Save all rows</button> <button class="btn g" type="button" onclick="bulk=false;bpre=[];render()">Cancel</button> <span id="bmsg" class="mut"></span></p></div>`;
+}
+function openBulk(){bulk=true;adding=false;editing=null;asg=null;upd=null;brows=5;bpre=[];render()}
+function moreRows(){brows=document.querySelectorAll("#bulkbox tbody tr").length+5;render()}
+function normCell(t,v){
+ v=String(v||"").trim();
+ if(t==="date"||t==="datetime-local"){
+  let m=v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(.*)$/);if(m)v=`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}${m[4]}`;
+  v=v.replace(" ","T");if(t==="date")return v.slice(0,10);return v.length===10?v+"T18:00":v.slice(0,16);
+ }
+ if(t==="number")return v.replace(/[₹,\s]/g,"");
+ return v;
+}
+function fillPaste(){
+ const cols=bcols(),tx=document.getElementById("bpaste").value;
+ bpre=tx.split(/\r?\n/).filter(l=>l.trim()).map(l=>(l.includes("\t")?l.split("\t"):l.split(",")).map((c,i)=>cols[i]?normCell(cols[i][2],c):c));
+ if(!bpre.length)return toast("Paste some rows first");
+ skipDraft=true;render();toast(bpre.length+" row(s) filled — check them, then Save all rows");
+}
+function parseOwners(str,n){
+ return String(str||"").split(/[,;]+/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=names().find(t=>vk(t)===vk(x));if(!m)throw new Error(n+"unknown team member “"+x+"”");return m});
+}
+function prep(rows){
+ const out=[],seen={},tot={};let pend=0;
+ rows.forEach(({i,rec})=>{
+  const n="Row "+(i+1)+": ";
+  F[view].forEach(([k,l,t,req])=>{if(!(k in rec))return;if(req&&t!=="multi"&&(rec[k]===""||rec[k]==null||(t==="number"&&isNaN(rec[k]))))throw new Error(n+l+" is required");if(t==="number"&&isNaN(rec[k]))rec[k]=0;if(t==="number"&&rec[k]<0)throw new Error(n+l+" cannot be negative")});
+  F[view].forEach(([k,,t])=>{if(SUG[k]&&t==="text"&&rec[k]){const sk=k+"|"+vk(rec[k]),m=sugg(k).find(x=>vk(x)===vk(rec[k]))||seen[sk];if(m)rec[k]=m;else seen[sk]=rec[k]}});
+  if(!mgmt&&["proc","sales","harvest"].includes(view)&&isClosed(rec.date))throw new Error(n+rec.date+" is closed. Ask management to reopen it.");
+  if(view==="tasks"){
+   if(canClose){rec.owners=parseOwners(rec.owners,n);if(!rec.owners.length)throw new Error(n+"every task needs at least one owner")}
+   else{if(!ME.member)throw new Error("Ask management to link your login to your team name first.");rec.owners=[ME.member]}
+   rec.remarks="";rec.result="";rec.progress=rec.status==="Completed"?100:0;rec.completedOn=rec.status==="Completed"?td():"";rec.assignedBy=ME.name;rec.assignedAt=Date.now();
+  }
+  if(view==="recurring")rec.owners=parseOwners(rec.owners,n);
+  if(view==="proc"){tot[rec.date]=(tot[rec.date]??sum(D.proc.filter(r=>r.date===rec.date),val))+val(rec);const over=tot[rec.date]>FUND;rec.approval=over?(mgmt?"approved":"pending"):"";if(over&&mgmt)rec.approvedByUser=ME.name;if(over&&!mgmt)pend++}
+  if(view==="sales"&&rec.pay==="Pending")pend++;
+  rec.createdAt=Date.now();out.push(rec);
+ });
+ return{out,pend};
+}
+async function saveBulk(){
+ const box=document.getElementById("bulkbox"),cols=bcols(),bm=t=>{const e=document.getElementById("bmsg");if(e)e.textContent=t};
+ const rows=[];
+ [...box.querySelectorAll("tbody tr")].forEach((tr,i)=>{
+  if([...tr.querySelectorAll("input[type=text],input[type=number],input:not([type])")].every(x=>!x.value.trim()))return;
+  const rec={};cols.forEach(([k,l,t])=>{const el=tr.querySelector(".g-"+k),v=el?el.value.trim():"";rec[k]=t==="number"?(v===""?NaN:+v):v});
+  rows.push({i,rec});
+ });
+ if(!rows.length)return bm("Nothing to save: fill at least one row.");
+ let r;try{r=prep(rows)}catch(e){return bm(e.message)}
+ if(view==="sales"&&r.pend&&!confirm(r.pend+" sale(s) are pending. Cash & Carry sales must be paid immediately. Save anyway?"))return;
+ try{
+  const b=db.batch();r.out.forEach(d=>b.add(view,d));
+  await b.commit("bulk add",view,r.out.length+" new row(s)");
+  bulk=false;bpre=[];render();
+  toast("Saved "+r.out.length+" row(s)"+(view==="proc"&&r.pend&&!mgmt?" · some are over the fund limit and wait for approval":""));
+ }catch(e){bm("Could not save: "+(e.code||e.message))}
+}
+/* ---------- bulk stock ---------- */
+const sid=k=>day+"_"+k.replace(/[^a-z0-9]+/g,"-")+"-"+[...k].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7).toString(36);
+function stockTools(){return `<div class="form assignbox" id="stbulk" style="margin-top:14px"><b>Bulk stock entry</b> <span class="mut">Paste from Excel/Sheets: Variety, Wastage, Physical count (tab or comma separated).</span><textarea id="spaste" rows="3" style="margin-top:8px"></textarea><p style="margin:8px 0 0"><button class="btn s" onclick="pasteStock()">Apply pasted rows</button> <button class="btn g s" onclick="acceptExpected()">Set every uncounted variety to its expected stock</button></p></div>`}
+async function pasteStock(){
+ if(!mgmt&&isClosed(day))return alert("This day is closed.");
+ const lines=document.getElementById("spaste").value.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return toast("Paste some rows first");
+ const b=db.batch(),nm=vnames();let n=0;
+ lines.forEach(l=>{const c=(l.includes("\t")?l.split("\t"):l.split(",")).map(x=>x.trim().replace(/[₹,]/g,"")),key=vk(c[0]);if(!key)return;
+  const doc=D.stock.find(x=>x.date===day&&vk(x.variety)===key),{id:_i,...o}=doc||{},nw={...o,date:day,variety:nm[key]||c[0]};
+  if(c[1]!==undefined&&c[1]!==""&&!isNaN(+c[1]))nw.wastage=+c[1];if(c[2]!==undefined&&c[2]!==""&&!isNaN(+c[2]))nw.physical=+c[2];
+  b.add("stock",nw,doc?doc.id:sid(key));n++});
+ try{await b.commit("bulk save","stock",n+" variety row(s)");document.getElementById("spaste").value="";toast("Saved "+n+" variety row(s)")}catch(e){alert(e.code||e.message)}
+}
+async function acceptExpected(){
+ if(!mgmt&&isClosed(day))return alert("This day is closed.");
+ const rows=SR.filter(r=>!r.has);if(!rows.length)return toast("Every variety already has a count");
+ if(!confirm("Set the physical count of "+rows.length+" variety(ies) to their expected stock?"))return;
+ const b=db.batch();rows.forEach(r=>{const {id:_i,...o}=r.doc||{};b.add("stock",{...o,date:day,variety:r.name,physical:n2(r.exp)},r.doc&&r.doc.id?r.doc.id:sid(r.v))});
+ try{await b.commit("bulk save","stock",rows.length+" count(s)");toast("Counts set for "+rows.length+" variety(ies)")}catch(e){alert(e.code||e.message)}
 }
 function stopAll(){unsubs.forEach(f=>f());unsubs=[];Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
