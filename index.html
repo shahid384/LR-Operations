@@ -93,11 +93,11 @@ const val=s=>(+s.qty||0)*(+s.rate||0);
 const overdue=t=>t.status!=="Completed"&&t.deadline&&new Date(t.deadline)<new Date();
 const isDelayed=t=>t.status==="Delayed"||overdue(t);
 const F={
- tasks:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Owners","multi",1],["note","Instructions for the assigned person(s)","area"],["date","Date","date",1],["deadline","Deadline","datetime-local",1],["priority","Priority",PRI,1],["status","Status",ST,1],["desc","Description / expected outcome","area"],["remarks","Remarks","area"],["result","Actual result","area"]],
+ tasks:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Owners","multi",1],["note","Instructions for the assigned person(s)","area"],["date","Date","date",1],["deadline","Deadline (optional)","datetime-local"],["priority","Priority",PRI,1],["status","Status",ST,1],["desc","Description / expected outcome","area"],["remarks","Remarks","area"],["result","Actual result","area"]],
  proc:[["date","Date","date",1],["farmer","Farmer","text",1],["variety","Flower variety","text",1],["qty","Quantity","number",1],["rate","Buying rate (₹)","number",1],["quality","Quality",["A","B","C"],1],["approvedBy","Approved by","team",1]],
  sales:[["date","Date","date",1],["buyer","Buyer","text",1],["variety","Flower variety","text",1],["qty","Quantity sold","number",1],["rate","Selling rate (₹)","number",1],["person","Person responsible","team",1],["pay","Payment status",["Paid","Pending"],1],["mode","Payment mode",["Cash","UPI","Card"],1]],
  harvest:[["date","Date","date",1],["farm","Own farm / block","text",1],["variety","Flower variety","text",1],["qty","Quantity added","number",1],["rate","Cost per unit (₹, optional)","number"],["note","Note","text"]],
- recurring:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Default owners (optional, changed each day when assigning)","multi"],["repeat","Repeats",["Every day","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],1],["time","Deadline time","time",1],["priority","Priority",PRI,1],["desc","Description","area"],["active","Active",["Yes","No"],1]],
+ recurring:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Default owners (optional, changed each day when assigning)","multi"],["repeat","Repeats",["Every day","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],1],["time","Deadline time (optional)","time"],["priority","Priority",PRI,1],["desc","Description","area"],["active","Active",["Yes","No"],1]],
  team:[["name","Name","text",1],["role","Responsibility","text",1]]};
 const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Fixed daily tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
 const COORD=[],ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
@@ -107,7 +107,7 @@ const COLS={
  ["Status",t=>`<span class="tag ${stCls(t)}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],
  ["Assigned to",t=>(t.owners||[]).length?t.owners.map(n=>`<div class="who1"><span class="av">${esc(ini(n))}</span>${esc(n)}</div>`).join(""):'<span class="tag bad">Unassigned</span>'],
  ["Assigned by",t=>t.assignedBy?`<div>${esc(t.assignedBy)}</div><div class="mut sm">${t.assignedAt?fmtDT(t.assignedAt):""}</div>`:'<span class="mut">—</span>'],
- ["Due",t=>`${fmtDT(t.deadline)}<div class="mut sm">Start ${esc(t.date||"")}</div>`],
+ ["Due",t=>`${t.deadline?fmtDT(t.deadline):'<span class="mut">No deadline</span>'}<div class="mut sm">Start ${esc(t.date||"")}</div>`],
  ["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":"ok"}">${esc(t.priority)}</span>`],
  ["Progress",t=>`<span class="pbar"><i style="width:${pct(t)}%"></i></span> <span class="mut sm">${pct(t)}%</span>`],
  ["Notes",t=>notesHtml(t)]],
@@ -334,7 +334,7 @@ function restoreDraft(ds){(ds||[]).forEach(d=>{const b=document.getElementById(d
 function renderList(){const d=DR||keepDraft();DR=null;renderList0();restoreDraft(d);drawBar()}
 function renderList0(){
  const el=document.getElementById("list");if(!el)return;
- const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).filter(r=>view!=="tasks"||((!fs||(fs==="Overdue"?overdue(r):r.status===fs))&&(!fpn||(r.owners||[]).includes(fpn)))).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
+ const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).filter(r=>view!=="tasks"||((!fs||(fs==="Overdue"?overdue(r):r.status===fs))&&(!fpn||(r.owners||[]).includes(fpn)))).sort((a,b)=>String(a.deadline||(view==="tasks"?"9999":a.createdAt)||"").localeCompare(String(b.deadline||(view==="tasks"?"9999":b.createdAt)||"")));
  VIS=rows.filter(r=>view!=="tasks"||canClose||isMine(r)).map(r=>r.id);SEL.forEach(id=>{if(!D[view].some(x=>x.id===id))SEL.delete(id)});
  const cols=COLS[view],head=`<tr>${BF[view]?'<th style="width:30px"><input type="checkbox" onchange="selAll(this.checked)"></th>':""}${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
  const tb=(rs,foot="")=>`<div class="tw"><table>${head}${rs.map(r=>rowHtml(r,cols)).join("")||`<tr><td colspan="${cols.length+ex()}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
@@ -424,7 +424,7 @@ const tplFor=d=>D.recurring.filter(r=>okDay(r,d));
 function genFor(d,list,force){
  list=list||tplFor(d);
  if(!force&&D.tasks.some(t=>t.date===d&&t.recId))return;
- list.forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],note:"",date:d,deadline:d+"T"+(r.time||"18:00"),priority:r.priority||"Medium",status:"Not Started",progress:0,assignedBy:"Daily task list",assignedAt:Date.now(),cat:r.cat||CATBYID[r.id]||"Other",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})});
+ list.forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],note:"",date:d,deadline:r.time?d+"T"+r.time:"",priority:r.priority||"Medium",status:"Not Started",progress:0,assignedBy:"Daily task list",assignedAt:Date.now(),cat:r.cat||CATBYID[r.id]||"Other",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})});
 }
 const SEEDT=[
 ["std01","Contact farmers and confirm daily availability",["Narayana","Teju"],"09:00","Every day","High","Identify farmers and get today’s availability."],
@@ -464,7 +464,7 @@ async function saveAssign(id){
  const owners=[...c.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value),note=c.querySelector("textarea").value.trim(),{id:_i,...o}=t;
  try{await db.collection("tasks").doc(id).set({...o,owners,note,assignedBy:ME.name,assignedAt:Date.now(),updatedAt:Date.now()});asg=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
 }
-const DEF={date:"",pay:"Paid",mode:"Cash",status:"Not Started",priority:"Medium",time:"18:00",repeat:"Every day",active:"Yes",quality:"A"};
+const DEF={date:"",pay:"Paid",mode:"Cash",status:"Not Started",priority:"Medium",time:"",repeat:"Every day",active:"Yes",quality:"A"};
 const BF={
  tasks:[["owners","Assign to"],["note","Instruction"],["status","Status"],["progress","Progress"],["priority","Priority"],["cat","Category"],["upnote","Add an update note"]],
  proc:[["quality","Quality"],["approvedBy","Approved by"]],
@@ -542,7 +542,7 @@ function bcell(k,t,v){
  return `<input class="g-${k}" type="${t}" ${t==="number"?'step="any" min="0"':""} ${SUG[k]&&t==="text"?`list="dl-${k}"`:""} value="${esc(v)}">`;
 }
 function bulkGrid(){
- const cols=bcols(),n=Math.max(brows,bpre.length),dd=v=>({...DEF,date:day,deadline:day+"T18:00"})[v];
+ const cols=bcols(),n=Math.max(brows,bpre.length),dd=v=>({...DEF,date:day})[v];
  const dl=cols.filter(([k,,t])=>SUG[k]&&t==="text").map(([k])=>`<datalist id="dl-${k}">${sugg(k).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`).join("");
  return `<div class="form assignbox" id="bulkbox"><b>Bulk add</b> <span class="mut">Type rows below, or paste from Excel/Sheets. Blank rows are ignored.</span>
  <p class="mut" style="margin:8px 0 4px">Paste columns in this order: ${cols.map(c=>c[1]).join(" · ")}</p>
