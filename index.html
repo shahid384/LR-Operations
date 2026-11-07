@@ -55,6 +55,12 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 .who{margin:22px 10px 0;padding-top:16px;border-top:1px solid var(--line);font-size:13px;line-height:1.8}
 .login{max-width:400px;margin:12vh auto;padding:0 16px}.login h1{font:500 34px Fraunces,Georgia,serif;margin:0 0 4px;color:var(--priD)}.login label{font:500 12px Inter,sans-serif;color:var(--mut)}.login a{color:var(--pri)}
 @media(max-width:720px){.who{display:flex;gap:8px;margin:0 0 0 8px;padding:0;border:0;align-items:center;white-space:nowrap}.login{margin:6vh auto}}
+.tag.pur{background:#f1ecfb;color:#6b3fb5}
+.av{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--priL);color:var(--pri);font:600 11px Inter,sans-serif;align-items:center;justify-content:center;margin-right:7px}
+.who1{display:flex;align-items:center;margin-bottom:4px;white-space:nowrap}
+.pbar{display:inline-block;width:70px;height:6px;border-radius:4px;background:var(--line);vertical-align:middle;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
+.sm{font-size:11.5px}.inst{margin-top:6px;padding:6px 9px;border-radius:8px;background:var(--ambL);color:var(--amb);font-size:12.5px}
+.nt{margin-bottom:6px;font-size:13px}.nt b{font-weight:600}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div>
 <script>
@@ -62,8 +68,18 @@ let FUND=200000,TARGET=100000;const PRI=["High","Medium","Low"],ST=["Not Started
 const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
 const CATBYID={std01:"Procurement",std02:"Procurement",std03:"Procurement",std04:"Procurement",std21:"Procurement",std05:"Management",std06:"Management",std07:"Management",std08:"Buyers & Sales",std09:"Buyers & Sales",std10:"Buyers & Sales",std11:"Logistics",std12:"Accounts & Stock",std13:"Accounts & Stock",std14:"Accounts & Stock",std15:"Accounts & Stock",std16:"Accounts & Stock",std17:"Coordination",std18:"Coordination",std19:"Coordination",std20:"Coordination"};
 const catOf=t=>t.cat||CATBYID[t.recId]||"Other";
+const ini=n=>String(n||"?").trim().slice(0,1).toUpperCase();
+const pct=t=>t.status==="Completed"?100:Math.max(0,Math.min(100,+t.progress||0));
+const stCls=t=>t.status==="Completed"?"ok":isDelayed(t)?"bad":t.status==="In Progress"?"warn":"pur";
+const fmtDT=v=>{if(!v)return "—";const d=new Date(v);return isNaN(d)?esc(v):d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})};
+const isMine=t=>!!ME.member&&(t.owners||[]).includes(ME.member);
+function notesHtml(t){
+ const u=t.updates||[],one=x=>`<div class="nt"><b>${esc(x.by)}</b> <span class="mut sm">${fmtDT(x.at)}</span><div>${esc(x.text)}</div></div>`;
+ const old=[t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | ");
+ return (u.length>2?`<div class="mut sm">${u.length-2} earlier update(s)</div>`:"")+u.slice(-2).map(one).join("")+(old?`<div class="mut sm">${esc(old)}</div>`:"");
+}
 const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[]},loaded={};
-let asg=null,mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
+let asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr=n=>"₹"+Math.round(n||0).toLocaleString("en-IN");
@@ -82,7 +98,15 @@ const F={
 const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Fixed daily tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
 const COORD=[],ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
 const COLS={
- tasks:[["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over from ${esc(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>${t.note?`<div style="margin-top:4px"><span class="tag warn">Instruction</span> ${esc(t.note)}</div>`:""}`],["Owners",t=>(t.owners||[]).length?esc(t.owners.join(", ")):'<span class="tag bad">Unassigned</span>'],["Deadline",t=>esc((t.deadline||"").replace("T"," "))],["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":""}">${esc(t.priority)}</span>`],["Status",t=>`<span class="tag ${t.status==="Completed"?"ok":isDelayed(t)?"bad":""}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],["Notes",t=>esc([t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | "))]],
+ tasks:[
+ ["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over from ${esc(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>${t.note?`<div class="inst"><b>Instruction:</b> ${esc(t.note)}</div>`:""}`],
+ ["Status",t=>`<span class="tag ${stCls(t)}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],
+ ["Assigned to",t=>(t.owners||[]).length?t.owners.map(n=>`<div class="who1"><span class="av">${esc(ini(n))}</span>${esc(n)}</div>`).join(""):'<span class="tag bad">Unassigned</span>'],
+ ["Assigned by",t=>t.assignedBy?`<div>${esc(t.assignedBy)}</div><div class="mut sm">${t.assignedAt?fmtDT(t.assignedAt):""}</div>`:'<span class="mut">—</span>'],
+ ["Due",t=>`${fmtDT(t.deadline)}<div class="mut sm">Start ${esc(t.date||"")}</div>`],
+ ["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":"ok"}">${esc(t.priority)}</span>`],
+ ["Progress",t=>`<span class="pbar"><i style="width:${pct(t)}%"></i></span> <span class="mut sm">${pct(t)}%</span>`],
+ ["Notes",t=>notesHtml(t)]],
  proc:[["Farmer",r=>esc(r.farmer)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Rate",r=>inr(r.rate),1],["Quality",r=>esc(r.quality)],["Approved by",r=>esc(r.approvedBy)],["Approval",r=>r.approval==="pending"?'<span class="tag bad">Awaiting approval</span>':r.approval==="approved"?'<span class="tag ok">Approved</span>':"—"],["Total",r=>`<b>${inr(val(r))}</b>`,1]],
  sales:[["Buyer",r=>esc(r.buyer)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Rate",r=>inr(r.rate),1],["Total",r=>`<b>${inr(val(r))}</b>`,1],["By",r=>esc(r.person)],["Payment",r=>`<span class="tag ${r.pay==="Paid"?"ok":"bad"}">${esc(r.pay)}</span> ${esc(r.mode)}`]],
  harvest:[["Farm",r=>esc(r.farm)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Cost/unit",r=>+r.rate>0?inr(r.rate):"—",1],["Note",r=>esc(r.note)]],
@@ -122,7 +146,7 @@ function render(){
  memo={};
  document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button></div>`;
  const m=document.getElementById("main");
- const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"&&ME.member?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button><button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
+ const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"?`<select onchange="fs=this.value;renderList()"><option value="">All status</option>${[...ST,"Overdue"].map(x=>`<option ${x===fs?"selected":""}>${x}</option>`).join("")}</select><select onchange="fpn=this.value;renderList()"><option value="">All people</option>${names().map(n=>`<option ${n===fpn?"selected":""}>${esc(n)}</option>`).join("")}</select>`:""}${view==="tasks"&&ME.member?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button><button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
  m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${(view==="tasks"||view==="recurring")&&canClose?taskTabs():""}${view==="tasks"&&canClose?genBanner():""}${view==="recurring"&&loaded.recurring&&!D.recurring.length?`<div class="al ok">No daily tasks yet. <button class="btn s" onclick="seedTasks()">Load the standard daily tasks</button> taken from your morning-meeting notes. You can edit them afterwards.</div>`:""}${adding||editing?formHtml():""}<div id="list"></div>`);
  if(!SP[view])renderList();
 }
@@ -260,7 +284,7 @@ function reportsV(){
  +tbl("team","Task completion by team member",[["Member","t"],["Responsibility","t"],["Assigned","n"],["Completed","n"],["Open","n"],["Delayed / overdue","n"],["Completion","p"]],tr)
  +'<p class="mut">Margin uses the average buying rate in this range (own-farm cost if no purchases). It shows “—” where no cost is known.</p>';
 }
-function go(v){asg=null;view=v;adding=false;editing=null;q="";render()}
+function go(v){asg=null;upd=null;view=v;adding=false;editing=null;q="";render()}
 function home(){
  const s=D.sales.filter(r=>r.date===day),p=D.proc.filter(r=>r.date===day),t=byDay("tasks");
  const sales=sum(s,val),coll=sum(s.filter(r=>r.pay==="Paid"),val),pend=sales-coll,proc=sum(p,val);
@@ -283,20 +307,32 @@ function home(){
  return `<div class="grid">${card("Daily sales target",inr(TARGET))}${card("Actual sales",inr(sales),`<div class="bar"><i style="width:${pct}%"></i></div><div class="l">${pct.toFixed(0)}% of target</div>`)}${card("Amount collected",inr(coll))}${card("Pending collections",`<span style="color:${pend?"var(--red)":"inherit"}">${inr(pend)}</span>`)}${card("Total procurement",inr(proc),`<div class="bar ${proc>FUND?"r":""}"><i style="width:${fp}%"></i></div><div class="l">Fund limit ${inr(FUND)}</div>`)}${card("Tasks completed",done)}${card("Tasks pending",open)}${card("Carried over",carried().length,'<div class="l">Unfinished from earlier days</div>')}${card("Delayed tasks",`<span style="color:${dl?"var(--red)":"inherit"}">${dl}</span>`)}${card("Closing stock value",inr(svv))}${card("Wastage value",inr(wv))}${card("Closing cash",inr(cr.close))}</div><h3>Alerts</h3>${al.map(a=>`<div class="al ${a[0]==="ok"?"ok":a[0]==="bad"?"bad":""}">${a[1]}</div>`).join("")}`;
 }
 function rowHtml(r,cols){
- const act=`<td class="num">${view==="proc"&&mgmt&&r.approval==="pending"?`<button class="btn s" onclick="approve('${r.id}')">Approve</button> `:""}${view==="tasks"&&canClose?`<button class="btn s" onclick="asg=(asg==='${r.id}'?null:'${r.id}');render()">Assign</button> `:""}${view==="tasks"&&!canClose&&!(r.owners||[]).includes(ME.member)?"":`<button class="btn g s" onclick="edit('${r.id}')">Edit</button>`} ${mgmt?`<button class="btn g s d" onclick="del('${r.id}')">Delete</button>`:""}</td>`;
+ const act=`<td class="num">${view==="proc"&&mgmt&&r.approval==="pending"?`<button class="btn s" onclick="approve('${r.id}')">Approve</button> `:""}${view==="tasks"&&(canClose||isMine(r))?`<button class="btn s" onclick="upd=(upd==='${r.id}'?null:'${r.id}');asg=null;render()">Update</button> `:""}${view==="tasks"&&canClose?`<button class="btn g s" onclick="asg=(asg==='${r.id}'?null:'${r.id}');upd=null;render()">Assign</button> `:""}${view==="tasks"&&!canClose?"":`<button class="btn g s" onclick="edit('${r.id}')">Edit</button>`} ${mgmt?`<button class="btn g s d" onclick="del('${r.id}')">Delete</button>`:""}</td>`;
  let h=`<tr>${cols.map(c=>`<td class="${c[2]?"num":""}">${c[1](r)}</td>`).join("")}${act}</tr>`;
  if(view==="tasks"&&asg===r.id)h+=`<tr><td colspan="${cols.length+1}">${assignBox(r)}</td></tr>`;
+ if(view==="tasks"&&upd===r.id)h+=`<tr><td colspan="${cols.length+1}">${updBox(r)}</td></tr>`;
  return h;
 }
 const assignBox=r=>`<div class="assignbox" id="as-${r.id}"><div class="chk" style="margin-bottom:10px">${names().map(n=>`<label><input type="checkbox" value="${esc(n)}" ${(r.owners||[]).includes(n)?"checked":""}>${esc(n)}</label>`).join("")}</div><textarea rows="2" placeholder="Instructions for the assigned person(s)">${esc(r.note||"")}</textarea><p style="margin:8px 0 0"><button class="btn s" onclick="saveAssign('${r.id}')">Save</button> <button class="btn g s" onclick="asg=null;render()">Close</button></p></div>`;
+const updBox=r=>`<div class="assignbox" id="up-${r.id}"><div class="fg"><div><label>Status</label><select class="u-st">${ST.map(x=>`<option ${x===r.status?"selected":""}>${x}</option>`).join("")}</select></div><div><label>Progress</label><select class="u-pr">${[0,10,20,30,40,50,60,70,80,90,100].map(x=>`<option value="${x}" ${x===pct(r)?"selected":""}>${x}%</option>`).join("")}</select></div></div>${(r.updates||[]).length?`<div style="margin:10px 0">${r.updates.map(x=>`<div class="nt"><b>${esc(x.by)}</b> <span class="mut sm">${fmtDT(x.at)}</span><div>${esc(x.text)}</div></div>`).join("")}</div>`:""}<label style="display:block;margin-top:10px;font:500 12px Inter,sans-serif;color:var(--mut)">Write about this task</label><textarea class="u-tx" rows="3" placeholder="What did you do? Any issue, result or help needed?"></textarea><p style="margin:8px 0 0"><button class="btn s" onclick="saveUpd('${r.id}')">Save update</button> <button class="btn g s" onclick="upd=null;render()">Close</button></p></div>`;
+async function saveUpd(id){
+ const c=document.getElementById("up-"+id),t=D.tasks.find(x=>x.id===id);if(!c||!t)return;
+ let st=c.querySelector(".u-st").value,pr=+c.querySelector(".u-pr").value;const tx=c.querySelector(".u-tx").value.trim();
+ if(pr===100)st="Completed";if(st==="Completed")pr=100;else if(st==="Not Started"&&pr>0)st="In Progress";
+ const ups=[...(t.updates||[])];if(tx)ups.push({by:ME.name,at:Date.now(),text:tx});
+ const {id:_i,...o}=t;
+ try{await db.collection("tasks").doc(id).set({...o,status:st,progress:pr,updates:ups.slice(-50),completedOn:st==="Completed"?(t.completedOn||td()):"",updatedAt:Date.now()});upd=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
+}
 function renderList(){
  const el=document.getElementById("list");if(!el)return;
- const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
+ const rows=(view==="team"?D.team:byDay(view)).filter(match).filter(r=>view!=="tasks"||!mine||(r.owners||[]).includes(ME.member)).filter(r=>view!=="tasks"||((!fs||(fs==="Overdue"?overdue(r):r.status===fs))&&(!fpn||(r.owners||[]).includes(fpn)))).sort((a,b)=>String(a.deadline||a.createdAt||"").localeCompare(String(b.deadline||b.createdAt||"")));
  const cols=COLS[view],head=`<tr>${cols.map(c=>`<th class="${c[2]?"num":""}">${c[0]}</th>`).join("")}<th></th></tr>`;
  const tb=(rs,foot="")=>`<div class="tw"><table>${head}${rs.map(r=>rowHtml(r,cols)).join("")||`<tr><td colspan="${cols.length+1}" class="mut">Nothing recorded${view==="team"?"":" for this day"}.</td></tr>`}${foot}</table></div>`;
  if(view==="tasks"){
   const cs=[...CATS,...new Set(rows.map(catOf).filter(c=>!CATS.includes(c)))];
-  el.innerHTML=cs.map(c=>{const g=rows.filter(r=>catOf(r)===c);return g.length?`<h3>${esc(c)} <span style="text-transform:none;letter-spacing:0;font-weight:400">· ${g.filter(r=>r.status==="Completed").length}/${g.length} done</span></h3>${tb(g)}`:""}).join("")||tb([]);
+  const tot=rows.length,dn=rows.filter(r=>r.status==="Completed").length,ap=tot?Math.round(sum(rows,pct)/tot):0;
+  const strip=`<div class="grid" style="margin-bottom:6px">${kc("Tasks",tot)}${kc("Completed",dn)}${kc("Overdue",rows.filter(overdue).length)}${kc("Unassigned",rows.filter(r=>!(r.owners||[]).length).length)}${kc("Overall progress",ap+"%",`<div class="bar"><i style="width:${ap}%"></i></div>`)}</div>`;
+  el.innerHTML=strip+cs.map(c=>{const g=rows.filter(r=>catOf(r)===c);return g.length?`<h3>${esc(c)} <span style="text-transform:none;letter-spacing:0;font-weight:400">· ${g.filter(r=>r.status==="Completed").length}/${g.length} done</span></h3>${tb(g)}`:""}).join("")||tb([]);
   return;
  }
  const foot=(view==="proc"||view==="sales")?`<tr><td colspan="${cols.length-1}"><b>Total</b></td><td class="num"><b>${inr(sum(rows,val))}</b></td></tr>`:"";
@@ -323,6 +359,7 @@ async function submitForm(e){
  if(view==="tasks"&&!canClose){if(editing)Object.keys(rec).forEach(k=>{if(!["status","remarks","result"].includes(k))delete rec[k]});else{if(!ME.member)return msg("Ask management to link your login to your team name first.");rec.owners=[ME.member]}}
  if(view==="tasks"&&canClose&&!rec.owners.length)return msg("Every task needs at least one owner.");
  if(view==="sales"&&rec.pay==="Pending"&&!confirm("Cash & Carry sales must be paid immediately. Record as pending anyway?"))return;
+ if(view==="tasks"){const ob=editing?(D.tasks.find(x=>x.id===editing)||{}):{};if(!editing||JSON.stringify(ob.owners||[])!==JSON.stringify(rec.owners||[])){rec.assignedBy=ME.name;rec.assignedAt=Date.now()}}
  try{
   if(view==="proc"){const oth=sum(D.proc.filter(r=>r.date===rec.date&&r.id!==editing),val),over=oth+val(rec)>FUND;rec.approval=over?(mgmt?"approved":"pending"):"";if(over&&mgmt)rec.approvedByUser=ME.name;if(over&&!mgmt)setTimeout(()=>alert("This takes the day’s procurement above the "+inr(FUND)+" fund limit, so it has been sent to management for approval."),50)}
   const c=db.collection(view);
@@ -376,7 +413,7 @@ const tplFor=d=>D.recurring.filter(r=>okDay(r,d));
 function genFor(d,list,force){
  list=list||tplFor(d);
  if(!force&&D.tasks.some(t=>t.date===d&&t.recId))return;
- list.forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],note:"",date:d,deadline:d+"T"+(r.time||"18:00"),priority:r.priority||"Medium",status:"Not Started",cat:r.cat||CATBYID[r.id]||"Other",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})});
+ list.forEach(r=>{const id=`r_${r.id}_${d}`;if(!D.tasks.some(t=>t.id===id))db.collection("tasks").doc(id).set({title:r.title,owners:r.owners||[],note:"",date:d,deadline:d+"T"+(r.time||"18:00"),priority:r.priority||"Medium",status:"Not Started",progress:0,assignedBy:"Daily task list",assignedAt:Date.now(),cat:r.cat||CATBYID[r.id]||"Other",desc:r.desc||"",remarks:"",result:"",recId:r.id,createdAt:Date.now()},{noaudit:true}).catch(()=>{})});
 }
 const SEEDT=[
 ["std01","Contact farmers and confirm daily availability",["Narayana","Teju"],"09:00","Every day","High","Identify farmers and get today’s availability."],
@@ -414,7 +451,7 @@ function genBanner(){
 async function saveAssign(id){
  const c=document.getElementById("as-"+id),t=D.tasks.find(x=>x.id===id);if(!c||!t)return;
  const owners=[...c.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value),note=c.querySelector("textarea").value.trim(),{id:_i,...o}=t;
- try{await db.collection("tasks").doc(id).set({...o,owners,note,updatedAt:Date.now()});asg=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
+ try{await db.collection("tasks").doc(id).set({...o,owners,note,assignedBy:ME.name,assignedAt:Date.now(),updatedAt:Date.now()});asg=null;render()}catch(e){alert("Could not save: "+(e.code||e.message))}
 }
 function stopAll(){unsubs.forEach(f=>f());unsubs=[];Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
