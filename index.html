@@ -66,10 +66,11 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 .bgrid input,.bgrid select{padding:6px 8px;min-width:104px}.bgrid td{padding:5px 6px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--priD);color:#fff;padding:10px 18px;border-radius:10px;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}#toast.show{opacity:1}
 #newv{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--priD);color:#fff;padding:9px 14px;text-align:center;font-size:13px}#newv .btn{margin-left:8px;background:#fff;color:var(--priD)}
+.tag{white-space:nowrap}.nw{white-space:nowrap}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
-const APP_VERSION="2026-11-12.2";
+const APP_VERSION="2026-11-12.3";
 let lastSnap=0,netOk=navigator.onLine,snapErr="";
 const syncHtml=()=>netOk&&!snapErr?`<span style="color:var(--pri)">● Live</span> · ${lastSnap?new Date(lastSnap).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"connecting"}`:`<span style="color:var(--red)">● ${netOk?"Sync problem":"Offline"}</span>`;
 const paintSync=()=>{const e=document.getElementById("sync");if(e)e.innerHTML=syncHtml()+" · v"+APP_VERSION};
@@ -78,6 +79,7 @@ let FUND=200000,TARGET=100000;const PRI=["High","Medium","Low"],ST=["Not Started
 const CATS=["Procurement","Management","Buyers & Sales","Logistics","Accounts & Stock","Coordination","Other"];
 const CATBYID={std01:"Procurement",std02:"Procurement",std03:"Procurement",std04:"Procurement",std21:"Procurement",std05:"Management",std06:"Management",std07:"Management",std08:"Buyers & Sales",std09:"Buyers & Sales",std10:"Buyers & Sales",std11:"Logistics",std12:"Accounts & Stock",std13:"Accounts & Stock",std14:"Accounts & Stock",std15:"Accounts & Stock",std16:"Accounts & Stock",std17:"Coordination",std18:"Coordination",std19:"Coordination",std20:"Coordination"};
 const catOf=t=>t.cat||CATBYID[t.recId]||"Other";
+const fmtD=d=>{const x=new Date(d+"T00:00:00");return isNaN(x)?esc(d):x.toLocaleDateString("en-IN",{day:"numeric",month:"short"})};
 const ini=n=>String(n||"?").trim().slice(0,1).toUpperCase();
 const pct=t=>t.status==="Completed"?100:Math.max(0,Math.min(100,+t.progress||0));
 const stCls=t=>t.status==="Completed"?"ok":isDelayed(t)?"bad":t.status==="In Progress"?"warn":"pur";
@@ -110,11 +112,11 @@ const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",sto
 const COORD=[],ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
 const COLS={
  tasks:[
- ["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over from ${esc(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>${t.note?`<div class="inst"><b>Instruction:</b> ${esc(t.note)}</div>`:""}`],
- ["Status",t=>`<span class="tag ${stCls(t)}">${esc(overdue(t)&&t.status!=="Delayed"?t.status+" · overdue":t.status)}</span>`],
+ ["Task",t=>`<b>${esc(t.title)}</b>${t.date&&t.date<day&&t.status!=="Completed"?` <span class="tag warn">Carried over · ${fmtD(t.date)}</span>`:""}<div class="mut">${esc(t.desc)}</div>${t.note?`<div class="inst"><b>Instruction:</b> ${esc(t.note)}</div>`:""}`],
+ ["Status",t=>overdue(t)&&t.status!=="Delayed"?`<span class="tag bad">Overdue</span><div class="mut sm">${esc(t.status)}</div>`:`<span class="tag ${stCls(t)}">${esc(t.status)}</span>`],
  ["Assigned to",t=>(t.owners||[]).length?t.owners.map(n=>`<div class="who1"><span class="av">${esc(ini(n))}</span>${esc(n)}</div>`).join(""):'<span class="tag bad">Unassigned</span>'],
  ["Assigned by",t=>t.assignedBy?`<div>${esc(t.assignedBy)}</div><div class="mut sm">${t.assignedAt?fmtDT(t.assignedAt):""}</div>`:'<span class="mut">—</span>'],
- ["Due",t=>`${t.deadline?fmtDT(t.deadline):'<span class="mut">No deadline</span>'}<div class="mut sm">Start ${esc(t.date||"")}</div>`],
+ ["Due",t=>`<span class="nw">${t.deadline?fmtDT(t.deadline):'<span class="mut">No deadline</span>'}</span><div class="mut sm nw">Start ${t.date?fmtD(t.date):"—"}</div>`],
  ["Priority",t=>`<span class="tag ${t.priority==="High"?"bad":t.priority==="Medium"?"warn":"ok"}">${esc(t.priority)}</span>`],
  ["Progress",t=>`<span class="pbar"><i style="width:${pct(t)}%"></i></span> <span class="mut sm">${pct(t)}%</span>`],
  ["Notes",t=>notesHtml(t)]],
@@ -123,7 +125,7 @@ const COLS={
  harvest:[["Farm",r=>esc(r.farm)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Cost/unit",r=>+r.rate>0?inr(r.rate):"—",1],["Note",r=>esc(r.note)]],
  recurring:[["Task",r=>`<b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div>`],["Owners",r=>esc((r.owners||[]).join(", "))],["Category",r=>esc(r.cat||CATBYID[r.id]||"Other")],["Repeats",r=>esc(r.repeat||"Every day")],["By",r=>esc(r.time)],["Priority",r=>esc(r.priority)],["Active",r=>`<span class="tag ${r.active==="No"?"":"ok"}">${esc(r.active)}</span>`]],
  team:[["Name",r=>`<b>${esc(r.name)}</b>`],["Responsibility",r=>esc(r.role)]]};
-const carried=()=>day>=td()?D.tasks.filter(t=>t.date&&t.date<day&&t.status!=="Completed"):[];
+const carried=()=>day>=td()?D.tasks.filter(t=>t.date&&t.date<day&&t.status!=="Completed"&&!(t.recId&&D.tasks.some(x=>x.recId===t.recId&&x.date>t.date&&x.date<=day))):[];
 const byDay=c=>c==="tasks"?[...D.tasks.filter(r=>!r.date||r.date===day||(r.completedOn===day&&r.status==="Completed")),...carried()]:D[c].filter(r=>!r.date||r.date===day);
 function addD(d,n){const x=new Date(d+"T00:00:00");x.setDate(x.getDate()+n);return new Date(x-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 function shift(n){day=addD(day,n);render()}
@@ -464,9 +466,17 @@ async function seedTasks(){
  catch(e){alert("Could not load: "+(e.code||e.message))}
 }
 function taskTabs(){return `<div class="top" style="margin-top:-8px"><button class="btn s ${view==="tasks"?"":"g"}" onclick="go('tasks')">Tasks for the day</button><button class="btn s ${view==="recurring"?"":"g"}" onclick="go('recurring')">Fixed daily task list</button></div>`}
+async function repeatAssign(){
+ const b=db.batch();let n=0;
+ D.tasks.filter(t=>t.date===day&&t.recId&&!(t.owners||[]).length).forEach(t=>{
+  const prev=D.tasks.filter(x=>x.recId===t.recId&&x.date<day&&(x.owners||[]).length).sort((p,q)=>q.date.localeCompare(p.date))[0];
+  if(!prev)return;const {id,...o}=t;b.add("tasks",{...o,owners:prev.owners,assignedBy:ME.name,assignedAt:Date.now(),updatedAt:Date.now()},id);n++});
+ if(!n)return toast("No earlier assignment found to copy");
+ try{await b.commit("bulk edit","tasks",n+" task(s): repeat last assignment");toast("Assigned "+n+" task(s) like last time")}catch(e){alert(e.code||e.message)}
+}
 function genBanner(){
  const T=D.tasks.filter(t=>t.date===day),miss=(day>td()||(day===td()&&!T.some(t=>t.recId)))?tplFor(day).filter(r=>!D.tasks.some(t=>t.id===`r_${r.id}_${day}`)):[],un=byDay("tasks").filter(t=>!(t.owners||[]).length).length;
- return (miss.length?`<div class="al"><b>${miss.length}</b> fixed task(s) for this day are not created yet. <button class="btn s" onclick="genFor(day,null,true)">Create them</button></div>`:"")+(un?`<div class="al bad">${un} task(s) not assigned yet. Press Assign on each one.</div>`:"");
+ return (miss.length?`<div class="al"><b>${miss.length}</b> fixed task(s) for this day are not created yet. <button class="btn s" onclick="genFor(day,null,true)">Create them</button></div>`:"")+(un?`<div class="al bad">${un} task(s) not assigned yet. Press Assign on each one, or <button class="btn s" onclick="repeatAssign()">Use the people from last time</button></div>`:"");
 }
 async function saveAssign(id){
  const c=document.getElementById("as-"+id),t=D.tasks.find(x=>x.id===id);if(!c||!t)return;
