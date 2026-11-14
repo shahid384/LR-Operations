@@ -67,10 +67,115 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--priD);color:#fff;padding:10px 18px;border-radius:10px;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}#toast.show{opacity:1}
 #newv{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--priD);color:#fff;padding:9px 14px;text-align:center;font-size:13px}#newv .btn{margin-left:8px;background:#fff;color:var(--priD)}
 .tag{white-space:nowrap}.nw{white-space:nowrap}
+#mt-root{--m-bg:#f3f4f8;--m-card:#fff;--m-tx:#161b2e;--m-mut:#63708a;--m-line:#e3e6ee;--m-acc:#2f5bea;--m-accL:#e8eefe;--m-ok:#1f7a4d;--m-okL:#e2f3ea;--m-am:#a8620a;--m-amL:#fcf0dc;--m-red:#c0392b;--m-redL:#fbe9e7;--m-gr:#e6e9f0;--m-inp:#f3f4f8}
+#mt-root *{box-sizing:border-box}
+#mt-root{color:var(--m-tx);font:14px/1.5 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#mt-root :focus-visible{outline:3px solid var(--m-acc);outline-offset:2px}
+#mt-root .mtop{background:var(--m-card);border-bottom:1px solid var(--m-line);padding:10px 24px;display:flex;gap:6px}
+#mt-root .mtop button{border:0;background:none;color:var(--m-mut);font:700 14px inherit;padding:9px 18px;border-radius:10px;cursor:pointer}
+#mt-root .mtop button[aria-current=page]{background:var(--m-accL);color:var(--m-acc)}
+#mt-root .mm{max-width:1180px;margin:0 auto;padding:28px 24px 48px}
+#mt-root h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
+#mt-root .sub{margin:2px 0 0;color:var(--m-mut)}
+#mt-root .head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:22px}
+#mt-root .tools{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+#mt-root .prog{min-width:240px}
+#mt-root .pl{display:flex;justify-content:space-between;color:var(--m-mut);font-weight:600;margin-bottom:6px}
+#mt-root .pl b{color:var(--m-tx)}
+#mt-root .bar{height:8px;border-radius:99px;background:var(--m-gr);overflow:hidden}
+#mt-root .bar i{display:block;height:100%;background:var(--m-ok);border-radius:99px;transition:width .2s}
+#mt-root .bar.sm{height:5px;margin-top:6px}
+#mt-root .btn{border:1px solid var(--m-line);background:var(--m-card);color:var(--m-tx);font:700 13px inherit;padding:9px 16px;border-radius:10px;cursor:pointer}
+#mt-root .btn:disabled{opacity:.45;cursor:not-allowed}
+#mt-root .btn.pri{background:var(--m-acc);border-color:var(--m-acc);color:#fff}
+#mt-root .list{background:var(--m-card);border:1px solid var(--m-line);border-radius:18px;overflow:hidden}
+#mt-root .row{display:grid;grid-template-columns:200px 1fr;gap:20px;padding:26px;border-bottom:1px solid var(--m-line)}
+#mt-root .row:last-child{border-bottom:0}
+#mt-root .row h2{margin:0 0 8px;font-size:17px;font-weight:800}
+#mt-root .pill{display:inline-block;padding:3px 12px;border-radius:99px;background:var(--m-gr);color:var(--m-mut);font-weight:700;font-size:12.5px}
+#mt-root .pill.ok{background:var(--m-okL);color:var(--m-ok)}
+#mt-root .part{display:grid;grid-template-columns:1fr 270px;gap:24px}
+#mt-root .part+.part{border-top:1px dashed var(--m-line);margin-top:20px;padding-top:20px}
+#mt-root .fl{display:block;font-weight:700;margin-bottom:6px}
+#mt-root textarea,#mt-root select,#mt-root input[type=date],#mt-root input[type=number]{width:100%;font:inherit;color:var(--m-tx);background:var(--m-inp);border:1px solid var(--m-line);border-radius:12px;padding:11px 14px}
+#mt-root textarea{resize:vertical;min-height:84px}
+#mt-root .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+#mt-root .pn{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:8px}
+#mt-root .av{width:28px;height:28px;border-radius:50%;background:var(--m-accL);color:var(--m-acc);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+#mt-root .add{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:18px}
+#mt-root .bills{list-style:none;margin:0;padding:0}
+#mt-root .bills li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0}
+#mt-root .bills select{width:auto}
+#mt-root .lbl{font-weight:700;color:var(--m-mut);margin-bottom:8px}
+#mt-root .chips{display:flex;flex-wrap:wrap}
+#mt-root .chip{display:inline-flex;gap:8px;align-items:center;padding:8px 14px;border:1px solid var(--m-line);border-radius:99px;margin:0 8px 8px 0;cursor:pointer;font-weight:600}
+#mt-root .chip:has(input:checked){background:var(--m-okL);border-color:var(--m-ok);color:var(--m-ok)}
+#mt-root .chip input{accent-color:var(--m-ok);width:16px;height:16px;margin:0}
+#mt-root .sst{color:var(--m-mut);font-size:13px;font-weight:600}
+#mt-root .sst.okt{color:var(--m-ok)}
+#mt-root .lk{background:none;border:0;color:var(--m-acc);font:700 13px inherit;padding:6px 0;cursor:pointer;text-decoration:underline}
+#mt-root .panel{margin-top:6px;padding:10px 14px;border:1px solid var(--m-line);border-radius:12px;background:var(--m-inp)}
+#mt-root .sw{display:flex;align-items:center;gap:10px;padding:5px 0;font-weight:600}
+#mt-root .sw input{appearance:none;width:38px;height:22px;border-radius:99px;background:var(--m-gr);position:relative;cursor:pointer;margin:0;flex:none}
+#mt-root .sw input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+#mt-root .sw input:checked{background:var(--m-acc)}
+#mt-root .sw input:checked::after{left:19px}
+#mt-root .strip{background:var(--m-card);border:1px solid var(--m-line);border-radius:18px;padding:22px 26px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+#mt-root .sl{flex:1;min-width:260px}
+#mt-root .sl b{display:block;font-size:17px;margin-bottom:10px}
+#mt-root .lg{display:flex;gap:16px;flex-wrap:wrap;list-style:none;margin:0;padding:0;color:var(--m-mut)}
+#mt-root .lg li{display:flex;align-items:center;gap:7px}
+#mt-root .sq{width:16px;height:16px;border-radius:5px;display:inline-block;border:1.5px solid}
+#mt-root .seg{display:inline-flex;background:var(--m-card);border:1px solid var(--m-line);border-radius:14px;padding:5px}
+#mt-root .seg button{border:0;background:none;color:var(--m-mut);font:700 14px inherit;padding:9px 18px;border-radius:10px;cursor:pointer}
+#mt-root .seg button[aria-pressed=true]{background:var(--m-tx);color:var(--m-card)}
+#mt-root .grid{background:var(--m-card);border:1px solid var(--m-line);border-radius:18px;overflow-x:auto}
+#mt-root table{border-collapse:separate;border-spacing:6px 8px;width:100%;min-width:760px}
+#mt-root th,#mt-root td{padding:0;vertical-align:middle;text-align:center}
+#mt-root .tk{text-align:left;padding:0 14px;font-weight:800;position:sticky;left:0;background:var(--m-card);z-index:1;min-width:130px}
+#mt-root thead th{padding:12px 4px;color:var(--m-mut);font-weight:700}
+#mt-root .dn{font-size:19px;color:var(--m-tx);font-weight:800}
+#mt-root .tl{font-size:12px;color:var(--m-acc);font-weight:700}
+#mt-root .tdy{background:var(--m-accL);border-radius:12px}
+#mt-root thead .tdy{color:var(--m-acc)}
+#mt-root thead .tdy .dn{color:var(--m-acc)}
+#mt-root .c{border-radius:12px;padding:15px 4px;font-weight:800;font-size:15px;min-height:52px;display:flex;align-items:center;justify-content:center}
+#mt-root .ok{background:var(--m-okL);color:var(--m-ok)}
+#mt-root .some{background:var(--m-amL);color:var(--m-am)}
+#mt-root .no{background:var(--m-redL);color:var(--m-red)}
+#mt-root .td{background:var(--m-accL);color:var(--m-acc);border:2px dashed var(--m-acc)}
+#mt-root .nt{background:var(--m-gr);color:var(--m-mut);font-weight:600}
+#mt-root .dash{color:var(--m-mut);font-weight:600}
+#mt-root .sq.ok{border-color:var(--m-ok)}
+#mt-root .sq.some{border-color:var(--m-am)}
+#mt-root .sq.no{border-color:var(--m-red)}
+#mt-root .sq.td{border:1.5px dashed var(--m-acc)}
+#mt-root .sq.nt{border-color:var(--m-gr)}
+#mt-root .rt{text-align:left;padding:0 14px;min-width:150px;font-weight:700}
+#mt-root .rt .bar{max-width:200px}
+#mt-root .pc{font-weight:800;color:var(--m-ok);font-size:18px}
+#mt-root .ft td b{font-size:15px}
+#mt-root .ft .tk{color:var(--m-mut)}
+#mt-root .cmp .c{padding:9px 1px;font-size:11px;min-height:38px}
+#mt-root .cmp table{min-width:1500px}
+#mt-root .note{color:var(--m-mut);margin:14px 4px 0}
+#mt-root dialog{border:1px solid var(--m-line);border-radius:18px;background:var(--m-card);color:var(--m-tx);padding:24px;width:min(440px,92vw)}
+#mt-root dialog::backdrop{background:rgba(10,14,28,.5)}
+#mt-root dialog h2{margin:0 0 4px}
+#mt-root #mlist{list-style:none;margin:14px 0;padding:0;display:grid;gap:10px}
+#mt-root #mlist li{display:grid;grid-template-columns:1fr auto;gap:8px}
+#mt-root #mlist input{font:inherit;color:var(--m-tx);background:var(--m-inp);border:1px solid var(--m-line);border-radius:12px;padding:10px 14px;width:100%}
+#mt-root .dact{display:flex;justify-content:space-between;gap:10px}
+@media (max-width:760px){#mt-root .mm{padding:20px 14px 40px}
+#mt-root .row,#mt-root .part{grid-template-columns:1fr;gap:14px}
+#mt-root .row{padding:20px}
+#mt-root .prog{min-width:100%}
+#mt-root .tools{width:100%}}
+#mt-root .sw0{display:flex;gap:6px;align-items:center}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
-const APP_VERSION="2026-11-12.3";
+const APP_VERSION="2026-11-13.1";
 let lastSnap=0,netOk=navigator.onLine,snapErr="";
 const syncHtml=()=>netOk&&!snapErr?`<span style="color:var(--pri)">● Live</span> · ${lastSnap?new Date(lastSnap).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"connecting"}`:`<span style="color:var(--red)">● ${netOk?"Sync problem":"Offline"}</span>`;
 const paintSync=()=>{const e=document.getElementById("sync");if(e)e.innerHTML=syncHtml()+" · v"+APP_VERSION};
@@ -91,8 +196,8 @@ function notesHtml(t){
  const old=[t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | ");
  return (u.length>2?`<div class="mut sm">${u.length-2} earlier update(s)</div>`:"")+u.slice(-2).map(one).join("")+(old?`<div class="mut sm">${esc(old)}</div>`:"");
 }
-const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[]},loaded={};
-let bulk=false,brows=5,bpre=[],skipDraft=false,SEL=new Set(),VIS=[],asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
+const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[],mtdays:[],mtticks:[]},loaded={};
+let MTCFG={},seedMT=false,bulk=false,brows=5,bpre=[],skipDraft=false,SEL=new Set(),VIS=[],asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr=n=>"₹"+Math.round(n||0).toLocaleString("en-IN");
@@ -108,7 +213,7 @@ const F={
  harvest:[["date","Date","date",1],["farm","Own farm / block","text",1],["variety","Flower variety","text",1],["qty","Quantity added","number",1],["rate","Cost per unit (₹, optional)","number"],["note","Note","text"]],
  recurring:[["title","Task","text",1],["cat","Category",CATS,1],["owners","Default owners (optional, changed each day when assigning)","multi"],["repeat","Repeats",["Every day","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],1],["time","Deadline time (optional)","time"],["priority","Priority",PRI,1],["desc","Description","area"],["active","Active",["Yes","No"],1]],
  team:[["name","Name","text",1],["role","Responsibility","text",1]]};
-const TITLE={home:"Dashboard",tasks:"Tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Fixed daily tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
+const TITLE={home:"Dashboard",mtasks:"Management tasks",tasks:"Staff tasks",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"Stock · own-farm additions",cash:"Cash flow",review:"Daily Review",reports:"Reports",history:"History",recurring:"Fixed daily tasks",team:"Team",settings:"Settings",users:"Users & roles",audit:"Change log"};
 const COORD=[],ADMIN=["settings","users","audit"],NODAY=["team","history","reports","users","audit","settings","recurring"];
 const COLS={
  tasks:[
@@ -158,9 +263,10 @@ function render0(){
  if(!ready)return;
  DR=skipDraft?null:keepDraft();skipDraft=false;
  memo={};
- document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button><div class="mut sm" id="sync">${syncHtml()} · v${APP_VERSION}</div></div>`;
+ document.getElementById("nav").innerHTML='<h1>LR Farms<small>Daily Operations</small></h1>'+Object.keys(TITLE).filter(k=>k!=="harvest"&&k!=="recurring"&&(mgmt||!ADMIN.includes(k))&&(canClose||!COORD.includes(k))&&(k!=="mtasks"||canClose||ME.mt)).map(k=>`<button class="${k===view||(k==="stock"&&view==="harvest")||(k==="tasks"&&view==="recurring")?"on":""}" onclick="go('${k}')">${TITLE[k]}</button>`).join("")+`<div class="who"><b>${esc(ME.name)}</b><span class="mut"> · ${esc(ROLE)}</span><br><button class="btn g s" onclick="FB.signOut(FB.auth)">Sign out</button><div class="mut sm" id="sync">${syncHtml()} · v${APP_VERSION}</div></div>`;
  const m=document.getElementById("main");
  const bar=`<div class="top"><h2>${TITLE[view]}</h2>${!NODAY.includes(view)?`<button class="btn g s" onclick="shift(-1)">‹</button><input type="date" value="${day}" onchange="day=this.value;render()"><button class="btn g s" onclick="shift(1)">›</button>${day!==td()?`<button class="btn g s" onclick="day=td();render()">Today</button>`:""}`:""}${view==="tasks"?`<select onchange="fs=this.value;renderList()"><option value="">All status</option>${[...ST,"Overdue"].map(x=>`<option ${x===fs?"selected":""}>${x}</option>`).join("")}</select><select onchange="fpn=this.value;renderList()"><option value="">All people</option>${names().map(n=>`<option ${n===fpn?"selected":""}>${esc(n)}</option>`).join("")}</select>`:""}${view==="tasks"&&myMem()?`<button class="btn g s" onclick="mine=!mine;render()">${mine?"Show all tasks":"Only my tasks"}</button>`:""}${!SP[view]?`<input type="search" placeholder="Search" value="${esc(q)}" oninput="q=this.value;renderList()" style="width:150px">`:""}${SP[view]||view==="team"?"":`<button class="btn" onclick="adding=true;editing=null;render()">${view==="recurring"?"+ Add fixed task":view==="tasks"?"+ Add new task":"+ Add"}</button>${BF[view]?'<button class="btn g" onclick="openBulk()">Bulk add</button>':""}<button class="btn g" onclick="csv()">CSV</button>`}${view==="team"&&mgmt?`<button class="btn" onclick="adding=true;editing=null;render()">+ Add member</button>`:""}</div>`;
+ if(view==="mtasks"){MT.show(m);return}
  m.innerHTML=bar+lockBanner()+(SP[view]?SP[view]():`${view==="harvest"?stockTabs():""}${(view==="tasks"||view==="recurring")&&canClose?taskTabs():""}${view==="tasks"&&canClose?genBanner():""}${view==="tasks"&&!canClose&&!myMem()?`<div class="al bad">Your login is not linked to a team member yet, so you cannot update tasks. Ask management to link it under Users &amp; roles.</div>`:""}${view==="recurring"&&loaded.recurring&&!D.recurring.length?`<div class="al ok">No daily tasks yet. <button class="btn s" onclick="seedTasks()">Load the standard daily tasks</button> taken from your morning-meeting notes. You can edit them afterwards.</div>`:""}${bulk&&BF[view]?bulkGrid():""}${adding||editing?formHtml():""}<div id="list"></div>`);
  if(!SP[view])renderList();
 }
@@ -402,7 +508,7 @@ const AN={tasks:"Task",proc:"Procurement",sales:"Sales",stock:"Stock",harvest:"O
 function settingsV(){return `<div class="form"><div class="fg"><div><label>Daily sales target (₹)</label><input id="st" type="number" value="${TARGET}"></div><div><label>Procurement fund limit (₹)</label><input id="sf" type="number" value="${FUND}"></div></div><p><button class="btn" onclick="saveCfg()">Save settings</button> <span id="sm" class="mut"></span></p></div><p class="mut">Procurement above the fund limit is held for management approval.</p>`}
 async function saveCfg(){try{await db.collection("settings").doc("main").set({target:+document.getElementById("st").value||TARGET,fund:+document.getElementById("sf").value||FUND});document.getElementById("sm").textContent="Saved."}catch(e){alert("Could not save: "+(e.code||e.message))}}
 function usersV(){return `<div class="form"><div class="fg"><div><label>Name</label><input id="un"></div><div><label>Email</label><input id="ue" type="email"></div><div><label>Temporary password (min 6)</label><input id="up"></div><div><label>Team member</label><select id="um"><option value="">—</option>${names().map(n=>`<option>${esc(n)}</option>`).join("")}</select></div><div><label>Role</label><select id="ur">${RL.map(r=>`<option>${r}</option>`).join("")}</select></div></div><p><button class="btn" onclick="addUser()">Create login</button> <span id="umsg" class="mut"></span></p></div>
-<div class="tw"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Team member</th><th></th></tr>${D.users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.id===ME.uid?esc(u.role)+" (you)":`<select onchange="setRole('${u.id}',this.value)">${RL.map(r=>`<option ${r===u.role?"selected":""}>${r}</option>`).join("")}</select>`}</td><td><select onchange="setMember('${u.id}',this.value)"><option value="">—</option>${names().map(n=>`<option ${n===u.member?"selected":""}>${esc(n)}</option>`).join("")}</select>${u.role==="staff"&&!u.member&&!names().some(n=>vk(n)===vk(u.name))?'<div class="sm" style="color:var(--red)">Not linked: cannot update tasks</div>':""}</td><td class="num">${u.id===ME.uid?"":`<button class="btn g s d" onclick="rmUser('${u.id}')">Remove access</button>`}</td></tr>`).join("")}</table></div>
+<div class="tw"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Team member</th><th>Task tracker</th><th></th></tr>${D.users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.id===ME.uid?esc(u.role)+" (you)":`<select onchange="setRole('${u.id}',this.value)">${RL.map(r=>`<option ${r===u.role?"selected":""}>${r}</option>`).join("")}</select>`}</td><td><select onchange="setMember('${u.id}',this.value)"><option value="">—</option>${names().map(n=>`<option ${n===u.member?"selected":""}>${esc(n)}</option>`).join("")}</select>${u.role==="staff"&&!u.member&&!names().some(n=>vk(n)===vk(u.name))?'<div class="sm" style="color:var(--red)">Not linked: cannot update tasks</div>':""}</td><td>${u.role==="staff"?`<label class="sw0"><input type="checkbox" ${u.mt?"checked":""} onchange="setMT('${u.id}',this.checked)"> Access</label>`:'<span class="mut sm">Always</span>'}</td><td class="num">${u.id===ME.uid?"":`<button class="btn g s d" onclick="rmUser('${u.id}')">Remove access</button>`}</td></tr>`).join("")}</table></div>
 <p class="mut">Link each login to its team member: staff can then update only the tasks assigned to them (status, remarks, result) and add tasks for themselves. Staff add and edit other records. Coordinators also close days and manage recurring tasks. Management also deletes, approves, edits the team and settings. “Remove access” blocks the login; delete the account in Firebase Console if you want it gone completely.</p>`}
 async function addUser(){
  const g=id=>document.getElementById(id).value.trim(),msg=t=>document.getElementById("umsg").textContent=t,name=g("un"),email=g("ue"),pw=g("up"),role=document.getElementById("ur").value,member=document.getElementById("um").value||(names().find(n=>vk(n)===vk(name))||"");
@@ -413,6 +519,7 @@ async function addUser(){
 }
 async function setRole(id,r){try{await FB.setDoc(FB.doc(FB.fs,"users",id),{role:r},{merge:true})}catch(e){alert(e.code||e.message)}}
 async function setMember(id,m){try{await FB.setDoc(FB.doc(FB.fs,"users",id),{member:m},{merge:true})}catch(e){alert(e.code||e.message)}}
+async function setMT(id,v){try{await FB.setDoc(FB.doc(FB.fs,"users",id),{mt:v},{merge:true})}catch(e){alert(e.code||e.message)}}
 async function rmUser(id){if(confirm("Remove this person’s access?"))try{await FB.deleteDoc(FB.doc(FB.fs,"users",id))}catch(e){alert(e.code||e.message)}}
 function auditV(){return `<div class="tw"><table><tr><th>When</th><th>By</th><th>Action</th><th>Area</th><th>Record</th></tr>${D.audit.slice().sort((a,b)=>b.at-a.at).map(a=>`<tr><td>${new Date(a.at).toLocaleString("en-IN")}</td><td>${esc(a.by)}</td><td><span class="tag ${a.act==="delete"?"bad":""}">${esc(a.act)}</span></td><td>${esc(AN[a.col]||a.col)}</td><td>${esc(a.label)}</td></tr>`).join("")||'<tr><td colspan="5" class="mut">No changes logged yet.</td></tr>'}</table></div><p class="mut">Latest 300 changes.</p>`}
 async function approve(id){const {id:_i,...o}=D.proc.find(x=>x.id===id)||{};try{await db.collection("proc").doc(id).set({...o,approval:"approved",approvedAt:Date.now(),approvedByUser:ME.name})}catch(e){alert(e.code||e.message)}}
@@ -652,7 +759,119 @@ function checkVersion(){
  fetch(location.href.split("#")[0].split("?")[0]+"?_="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{const m=String(t).match(/APP_VERSION="([^"]+)"/);if(m&&m[1]!==APP_VERSION&&!document.getElementById("newv"))document.body.insertAdjacentHTML("beforeend",'<div id="newv">A new version of the dashboard is available. <button class="btn s" onclick="location.reload()">Reload now</button></div>')}).catch(()=>{});
 }
 setInterval(checkVersion,300000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});setTimeout(checkVersion,4000);
-function stopAll(){unsubs.forEach(f=>f());unsubs=[];Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
+/* ===== Management tasks (sign-off tracker + 7-day dashboard) ===== */
+(function(){
+const SKEL="<div id=\"mt-root\"><header class=\"mtop\"><nav aria-label=\"Pages\" style=\"display:flex;gap:6px\"><button type=\"button\" id=\"b-tasks\" aria-current=\"page\">Tasks</button><button type=\"button\" id=\"b-dash\">Dashboard</button></nav></header>\n<div class=\"mm\">\n<section id=\"p-tasks\" aria-labelledby=\"h-tasks\">\n<div class=\"head\"><div><h1 id=\"h-tasks\">Tasks</h1><p class=\"sub\" id=\"date\"></p></div>\n<div class=\"tools\"><button type=\"button\" class=\"btn\" id=\"mgrbtn\">Management team</button>\n<div class=\"prog\"><div class=\"pl\"><span>Management ticks</span><b id=\"ptxt\"></b></div><div class=\"bar\" id=\"pb\" role=\"progressbar\" aria-label=\"Management ticks progress\" aria-valuemin=\"0\" aria-valuemax=\"100\"><i id=\"pbar\"></i></div></div></div></div>\n<div class=\"list\" id=\"tasks\"></div></section>\n<section id=\"p-dash\" hidden aria-labelledby=\"h-dash\"><div id=\"dash\"></div></section>\n</div>\n<dialog id=\"md\" aria-labelledby=\"mt\"><h2 id=\"mt\">Management team</h2><p class=\"sub\">Rename, add or remove managers. At least one must stay.</p>\n<ul id=\"mlist\"></ul><div class=\"dact\"><button type=\"button\" class=\"btn\" id=\"madd\">Add manager</button><form method=\"dialog\"><button class=\"btn pri\">Done</button></form></div></dialog></div>";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+let mgrs=[],staff=[],deleg=[],bills=[],txt={},pay={date:"",amt:""},assignee="",range=7,mtTab="tasks",dirty=false,timer;
+const so={},open=new Set(),pend={},mn=m=>(m.name||"").trim()||"Unnamed";
+const slug=s=>vk(s).replace(/[^a-z0-9]+/g,"-");
+const effWho=(k,id)=>{const w=((MTCFG.who||{})[k]||{})[id];return w!==undefined?w:k!=="proc"};
+const T=()=>[{id:"strategy",name:"Strategy call",keys:["strategy"]},{id:"deleg",name:"Delegation",keys:deleg.map(i=>"deleg_"+i)},{id:"sales",name:"Sales goal",keys:["sales"]},{id:"fin",name:"Finance review",keys:["bills","pay","day"]},{id:"proc",name:"Procurement",keys:["proc"]},{id:"follow",name:"Payment follow up",keys:["follow"]}];
+const chosen=k=>mgrs.filter(m=>so[k].who[m.id]),done=k=>chosen(k).filter(m=>so[k].tick[m.id]).length;
+const tot=t=>t.keys.reduce((a,k)=>a+chosen(k).length,0),dn=t=>t.keys.reduce((a,k)=>a+done(k),0);
+const canTick=m=>{if(!mgmt)return false;const me=mgrs.filter(x=>vk(mn(x))===vk(ME.name)||vk(mn(x))===vk(myMem()));return me.length?me.includes(m):true};
+function sync(){
+ staff=D.team.map(t=>({id:slug(t.name),name:t.name})).sort((a,b)=>a.name.localeCompare(b.name));
+ mgrs=(MTCFG.mgrs||[]).map(m=>({...m}));deleg=(MTCFG.deleg||[]).filter(i=>staff.some(s=>s.id===i));bills=MTCFG.bills||[];
+ const ds=td(),dy=D.mtdays.find(x=>x.date===ds)||{},tk=D.mtticks.find(x=>x.date===ds)||{},d3=new Date();d3.setDate(d3.getDate()+3);
+ txt={...(dy.txt||{}),...pend};pay={date:(dy.pay&&dy.pay.date)||iso(d3),amt:(dy.pay&&dy.pay.amt)||""};assignee=dy.assignee||"";
+ for(const k in so)delete so[k];
+ T().forEach(t=>t.keys.forEach(k=>{so[k]={who:{},tick:{}};mgrs.forEach(m=>{so[k].who[m.id]=effWho(k,m.id);so[k].tick[m.id]=!!((tk.tick||{})[k]||{})[m.id]})}));
+}
+/* ---------- tasks page ---------- */
+function signoff(k){
+ const c=chosen(k),d=done(k),o=open.has(k),st=!c.length?"No one needs to tick this":d===c.length?"Completed":d+" of "+c.length+" ticked";
+ return `<div class="so"><div class="lbl">Management sign-off</div><div class="chips">${c.map(m=>`<label class="chip"><input type="checkbox" data-act="tick" data-k="${k}" data-m="${m.id}" ${so[k].tick[m.id]?"checked":""} ${canTick(m)?"":"disabled"}>${esc(mn(m))}</label>`).join("")}</div><div class="sst ${c.length&&d===c.length?"okt":""}">${st}</div><button type="button" class="lk" data-act="open" data-k="${k}" aria-expanded="${o}">Choose who ticks</button>${o?`<div class="panel" role="group" aria-label="Who ticks">${mgrs.map(m=>`<label class="sw"><input type="checkbox" role="switch" data-act="who" data-k="${k}" data-m="${m.id}" ${so[k].who[m.id]?"checked":""} ${mgmt?"":"disabled"}><span>${esc(mn(m))}</span></label>`).join("")}</div>`:""}</div>`;
+}
+const part=(h,k)=>`<div class="part"><div class="in">${h}</div>${signoff(k)}</div>`;
+const ta=(k,l,ph)=>`<label class="fl" for="x-${k}">${l}</label><textarea id="x-${k}" data-t="${k}" placeholder="${ph}">${esc(txt[k]||"")}</textarea>`;
+function row(t){
+ const n=tot(t),d=dn(t),pill=n===0?`<span class="pill">Notes only</span>`:d===n?`<span class="pill ok">Completed</span>`:`<span class="pill">${d} of ${n} ticked</span>`;
+ let b="";
+ if(t.id==="strategy")b=part(ta("strategy","Agenda and decisions","What was discussed and decided on the call"),"strategy");
+ if(t.id==="deleg"){
+  b=deleg.map(i=>{const s=staff.find(x=>x.id===i);return part(`<div class="pn"><span class="av">${esc(s.name[0])}</span>${esc(s.name)}</div><textarea data-t="deleg_${i}" aria-label="What ${esc(s.name)} has been asked to do" placeholder="What this person has been asked to do">${esc(txt["deleg_"+i]||"")}</textarea>`,"deleg_"+i)}).join("");
+  const rest=staff.filter(s=>!deleg.includes(s.id));
+  if(rest.length)b+=`<div class="add"><select id="addsel" aria-label="Staff member to add">${rest.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select><button type="button" class="btn" data-act="addstaff" ${mgmt?"":"disabled"}>Add person</button></div>`;
+ }
+ if(t.id==="sales")b=part(ta("sales","Goal","Target, buyers to reach, deadline")+`<label class="fl" for="asg" style="margin-top:14px">Assigned to</label><select id="asg" data-a="1"><option value="">Choose a person</option>${staff.map(s=>`<option ${assignee===s.name?"selected":""}>${esc(s.name)}</option>`).join("")}</select>`,"sales");
+ if(t.id==="fin")b=part(`<div class="fl">Bill status</div><ul class="bills">${bills.map((x,i)=>`<li><span>${esc(x.n)}</span><select data-b="${i}" ${mgmt?"":"disabled"} aria-label="Status of ${esc(x.n)}">${["Pending","Approved","Paid"].map(o=>`<option ${x.s===o?"selected":""}>${o}</option>`).join("")}</select>${mgmt?`<button type="button" class="lk" data-act="rmbill" data-b="${i}" aria-label="Remove ${esc(x.n)}">Remove</button>`:""}</li>`).join("")}</ul>${mgmt?`<div class="add"><input id="billn" aria-label="New bill name" placeholder="Add a bill, for example vendor and month" style="padding:11px 14px;border:1px solid var(--m-line);border-radius:12px;background:var(--m-inp);color:inherit;font:inherit"><button type="button" class="btn" data-act="addbill">Add bill</button></div>`:""}`,"bills")+part(ta("pay","Payment planning","What gets paid, how much, from which account")+`<div class="two"><input type="date" data-p="date" aria-label="Pay on date" value="${pay.date}"><input type="number" min="0" inputmode="decimal" data-p="amt" aria-label="Amount" placeholder="Amount" value="${esc(pay.amt)}"></div>`,"pay")+part(ta("day","Day book","Entries to fix, gaps, notes"),"day");
+ if(t.id==="proc")b=part(ta("proc","What needs to be bought","Items, quantity, supplier, needed by"),"proc");
+ if(t.id==="follow")b=part(ta("follow","Who owes us and what was said","Party, amount, last contact, promised date"),"follow");
+ return `<article class="row"><div><h2>${t.name}</h2>${pill}</div><div>${b}</div></article>`;
+}
+function renderTasks(){
+ const tt=T(),N=tt.reduce((a,t)=>a+tot(t),0),D=tt.reduce((a,t)=>a+dn(t),0),p=N?D/N*100:0;
+ $("#tasks").innerHTML=tt.map(row).join("");
+ $("#ptxt").textContent=D+" of "+N;$("#pbar").style.width=p+"%";$("#pb").setAttribute("aria-valuenow",Math.round(p));
+}
+/* ---------- dashboard ---------- */
+const dayRec=(arr,ds)=>arr.find(x=>x.date===ds)||{};
+function cell(t,ti,off){
+ const d=new Date();d.setDate(d.getDate()-off);const ds=iso(d),tk=dayRec(D.mtticks,ds),dy=dayRec(D.mtdays,ds);
+ const keys=off===0?t.keys:[...new Set([...t.keys,...(t.id==="deleg"?Object.keys(tk.tick||{}).filter(k=>k.startsWith("deleg_")):[])])];
+ let n=0,k2=0;
+ keys.forEach(k=>mgrs.forEach(m=>{const sw=off===0?undefined:((tk.who||{})[k]||{})[m.id],w=sw!==undefined?sw:effWho(k,m.id);if(w){n++;if(((tk.tick||{})[k]||{})[m.id])k2++}}));
+ if(n===0)return{s:"note",T:0,note:keys.some(k=>((off===0?txt:dy.txt||{})[k]||"").trim())};
+ if(off===0)return{s:k2===n?"ok":"td",k:k2,T:n};
+ return{s:k2===n?"ok":k2===0?"no":"some",k:k2,T:n};
+}
+function renderDash(){
+ const ds=[];for(let i=range-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);ds.push({off:i,d})}
+ const rows=T().map((t,ti)=>({t,c:ds.map(x=>cell(t,ti,x.off))}));
+ const per=ds.map((x,j)=>{const tr=rows.filter(r=>r.c[j].T>0);return{n:tr.filter(r=>r.c[j].s==="ok").length,m:tr.length}});
+ const N=per.reduce((a,p)=>a+p.n,0),M=per.reduce((a,p)=>a+p.m,0),pc=M?Math.round(N/M*100):0;
+ const f=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+ const when=range===1?"today":range===7?"this week":"in the past 30 days";
+ const tdc=x=>x.off===0?"tdy":"";
+ const body=c=>c.s==="note"?(c.note?`<div class="c nt">${range===30?"Note":"Note added"}</div>`:`<div class="c dash">—</div>`):`<div class="c ${c.s}">${c.s==="ok"?"✓ ":""}${c.k}/${c.T}</div>`;
+ $("#dash").innerHTML=`<div class="head"><div><h1 id="h-dash">Dashboard</h1><p class="sub">Task tracker · ${f(ds[0].d)}${ds.length>1?" to "+f(ds[ds.length-1].d):""}</p></div><div class="seg" role="group" aria-label="Date range">${[[1,"Today"],[7,"Past 7 days"],[30,"30 days"]].map(([v,l])=>`<button type="button" data-r="${v}" aria-pressed="${range===v}">${l}</button>`).join("")}</div></div>
+ <div class="strip"><div class="sl"><b>${N} of ${M} task days completed ${when}</b><div class="bar" role="progressbar" aria-label="Completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pc}"><i style="width:${pc}%"></i></div></div><ul class="lg"><li><i class="sq ok"></i>All ticked</li><li><i class="sq some"></i>Some ticked</li><li><i class="sq no"></i>None ticked</li><li><i class="sq td"></i>Today, pending</li><li><i class="sq nt"></i>Notes only</li></ul></div>
+ <div class="grid ${range===30?"cmp":""}"><table><thead><tr><th class="tk">Task</th>${ds.map(x=>`<th class="${tdc(x)}"><div>${x.d.toLocaleDateString("en-GB",{weekday:"short"})}</div><div class="dn">${x.d.getDate()}</div>${x.off===0?'<div class="tl">Today</div>':""}</th>`).join("")}<th>${range===1?"Today":range+" days"}</th></tr></thead><tbody>
+ ${rows.map(r=>{const dd=r.c.filter(c=>c.s==="ok").length;return `<tr><th scope="row" class="tk">${r.t.name}</th>${r.c.map((c,j)=>`<td class="${tdc(ds[j])}">${body(c)}</td>`).join("")}<td class="rt">${r.c.every(c=>c.s==="note")?'<span class="sst">Notes only</span>':`${dd} of ${ds.length} days done<div class="bar sm"><i style="width:${dd/ds.length*100}%"></i></div>`}</td></tr>`}).join("")}
+ <tr class="ft"><th scope="row" class="tk">Tasks done</th>${per.map((p,j)=>`<td class="${tdc(ds[j])}"><b>${p.n} of ${p.m}</b><div class="bar sm" style="margin:6px 8px 0"><i style="width:${p.m?p.n/p.m*100:0}%"></i></div></td>`).join("")}<td class="pc">${pc}%</td></tr></tbody></table></div>
+ <p class="note">Each cell shows management ticks for that day, for example 3/4 means three of four ticks done. Notes only tasks have no ticks to track.</p>`;
+}
+/* ---------- wiring into the app ---------- */
+function renderAll(){const a=document.activeElement,d=a&&a.dataset?{...a.dataset}:{};renderTasks();renderDash();if(d.act&&d.k){const n=document.querySelector(`#mt-root [data-act="${d.act}"][data-k="${d.k}"]`+(d.m?`[data-m="${d.m}"]`:""));if(n)n.focus()}}
+const W=(c,id,x)=>FB.setDoc(FB.doc(FB.fs,c,id),x,{merge:true}).catch(e=>toast("Could not save: "+(e.code||e.message)));
+function flush(){const ds=td();Object.keys(pend).forEach(k=>{const v=pend[k];delete pend[k];W("mtdays",ds,{date:ds,txt:{[k]:v}})})}
+function renderMd(){$("#mlist").innerHTML=mgrs.map(m=>`<li><input data-mid="${m.id}" aria-label="Manager name" value="${esc(m.name)}"><button type="button" class="btn" data-rm="${m.id}" ${mgrs.length<2?"disabled":""}>Remove</button></li>`).join("")}
+function tab(w){mtTab=w;$("#p-tasks").hidden=w!=="tasks";$("#p-dash").hidden=w!=="dash";$("#b-tasks").setAttribute("aria-current",w==="tasks"?"page":"false");$("#b-dash").setAttribute("aria-current",w==="dash"?"page":"false");if(w==="dash")renderDash()}
+function wire(){
+ const r=$("#mt-root"),tk=$("#tasks");
+ tk.addEventListener("change",e=>{const t=e.target,d=t.dataset,ds=td();
+  if(d.act==="tick"){const who={};T().forEach(x=>x.keys.forEach(k=>{who[k]={};mgrs.forEach(m=>who[k][m.id]=so[k].who[m.id])}));W("mtticks",ds,{date:ds,who,tick:{[d.k]:{[d.m]:t.checked}}})}
+  else if(d.act==="who")W("mtcfg","main",{who:{[d.k]:{[d.m]:t.checked}}});
+  else if(d.b!==undefined)W("mtcfg","main",{bills:bills.map((x,i)=>i==d.b?{...x,s:t.value}:x)});
+  else if(d.a)W("mtdays",ds,{date:ds,assignee:t.value});
+  else if(d.p)W("mtdays",ds,{date:ds,pay:{[d.p]:t.value}})});
+ tk.addEventListener("input",e=>{const d=e.target.dataset;if(d.t){pend[d.t]=e.target.value;clearTimeout(timer);timer=setTimeout(flush,700)}});
+ r.addEventListener("focusout",()=>{flush();if(dirty)setTimeout(()=>MT.render(),120)});
+ tk.addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const a=b.dataset.act;
+  if(a==="open"){open.has(b.dataset.k)?open.delete(b.dataset.k):open.add(b.dataset.k);renderAll()}
+  if(a==="addstaff"){const v=$("#addsel").value;if(v)W("mtcfg","main",{deleg:[...deleg,v]})}
+  if(a==="addbill"){const n=$("#billn").value.trim();if(n)W("mtcfg","main",{bills:[...bills,{n,s:"Pending"}]})}
+  if(a==="rmbill"&&confirm("Remove this bill?")){const bi=+b.dataset.b;W("mtcfg","main",{bills:bills.filter((x,i)=>i!==bi)})}});
+ $("#dash").addEventListener("click",e=>{const b=e.target.closest("[data-r]");if(!b)return;range=+b.dataset.r;renderDash();const n=document.querySelector(`#mt-root [data-r="${range}"]`);if(n)n.focus()});
+ $("#b-tasks").onclick=()=>tab("tasks");$("#b-dash").onclick=()=>tab("dash");
+ $("#mgrbtn").onclick=()=>{renderMd();$("#md").showModal()};if(!mgmt)$("#mgrbtn").hidden=true;
+ $("#mlist").addEventListener("input",e=>{const id=e.target.dataset.mid;if(id)W("mtcfg","main",{mgrs:mgrs.map(m=>m.id==id?{...m,name:e.target.value}:m)})});
+ $("#mlist").addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b||mgrs.length<2)return;mgrs=mgrs.filter(m=>m.id!=b.dataset.rm);W("mtcfg","main",{mgrs});renderMd()});
+ $("#madd").onclick=()=>{const id=Math.max(MTCFG.nm||1,...mgrs.map(m=>m.id+1)),m={id,name:"New manager"};mgrs=[...mgrs,m];W("mtcfg","main",{mgrs,nm:id+1});renderMd();const i=[...document.querySelectorAll("#mlist input")].pop();if(i){i.focus();i.select()}};
+ $("#date").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+ tab(mtTab);
+}
+window.MT={show(m){if(!m.querySelector("#mt-root")){m.innerHTML=SKEL;wire()}this.render(true)},
+ render(force){const r=document.getElementById("mt-root");if(!r)return;sync();const a=document.activeElement;
+  if(!force&&a&&r.contains(a)&&!a.closest("dialog")&&a.matches("textarea,input[type=text],input[type=number],input[type=date],select")){dirty=true;return}
+  dirty=false;renderAll()}};
+})();
+function stopAll(){unsubs.forEach(f=>f());unsubs=[];MTCFG={};seedMT=false;Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
 function loginScreen(){screen(`<h1>LR Farms</h1><p class="mut">Daily Operations · sign in</p><div class="form"><label>Email</label><input id="le" type="email" autocomplete="username"><label style="margin-top:10px;display:block">Password</label><input id="lp" type="password" autocomplete="current-password"><p><button class="btn" onclick="doLogin()">Sign in</button> <button class="btn g" onclick="doReset()">Forgot password</button></p><p id="lm" class="mut"></p></div><p class="mut"><a href="#" onclick="doFirst();return false">First-time setup: create the admin account</a></p>`)}
 const lm=t=>{const e=document.getElementById("lm");if(e)e.textContent=t},nice=e=>/invalid-credential|wrong-password|user-not-found|invalid-email/.test(e.code)?"Wrong email or password. If this is the first time, use “First-time setup” below.":e.code==="auth/operation-not-allowed"?"Email/Password sign-in is not switched on in Firebase yet: Authentication → Sign-in method → Email/Password → Enable.":e.code==="auth/email-already-in-use"?"This email already has an account. Use Sign in.":(e.code||e.message);
@@ -675,11 +894,16 @@ async function start(u){
    b.set(ref,{name:pendingName||u.email.split("@")[0],email:u.email,role:"management",createdAt:Date.now()});
    await b.commit();s=await FB.getDoc(ref);
   }
-  const x=s.data();ME={uid:u.uid,name:x.name,email:u.email,member:x.member||""};ROLE=x.role;mgmt=ROLE==="management";canClose=mgmt||ROLE==="coordinator";mine=!canClose;
+  const x=s.data();ME={uid:u.uid,name:x.name,email:u.email,member:x.member||"",mt:!!x.mt};ROLE=x.role;mgmt=ROLE==="management";canClose=mgmt||ROLE==="coordinator";mine=!canClose;
   db=mkdb();ready=true;document.getElementById("nav").style.display="";
   const fail=e=>{snapErr=e.code||e.message||"error";paintSync();document.getElementById("main").innerHTML='<p class="al bad">Data error: '+esc(e.code||e.message)+'. Check that the Firestore rules are published.</p>'};
   ["tasks","proc","sales","team","stock","cash","days","harvest","recurring"].forEach(c=>unsubs.push(FB.onSnapshot(FB.collection(FB.fs,c),sn=>{D[c]=sn.docs.map(d=>({id:d.id,...d.data()}));loaded[c]=true;lastSnap=Date.now();snapErr="";after();render()},fail)));
   unsubs.push(FB.onSnapshot(FB.doc(FB.fs,"settings","main"),sn=>{if(sn.exists()){TARGET=+sn.data().target||TARGET;FUND=+sn.data().fund||FUND}setNone=!sn.exists();loaded.settings=true;lastSnap=Date.now();snapErr="";after();render()},fail));
+  if(canClose||x.mt){
+   const from=addD(td(),-35),mfail=e=>toast("Management tasks unavailable: "+(e.code||e.message)+". Publish the new Firestore rules.");
+   ["mtdays","mtticks"].forEach(c=>unsubs.push(FB.onSnapshot(FB.query(FB.collection(FB.fs,c),FB.where("date",">=",from)),sn=>{D[c]=sn.docs.map(d=>({id:d.id,...d.data()}));render()},mfail)));
+   unsubs.push(FB.onSnapshot(FB.doc(FB.fs,"mtcfg","main"),sn=>{MTCFG=sn.exists()?sn.data():{};if(!sn.exists()&&mgmt&&!seedMT){seedMT=true;FB.setDoc(FB.doc(FB.fs,"mtcfg","main"),{mgrs:[{id:1,name:"Shahid"},{id:2,name:"Lohith"}],nm:3,deleg:[],bills:[],who:{}},{merge:true})}render()},mfail));
+  }
   if(mgmt){unsubs.push(FB.onSnapshot(FB.collection(FB.fs,"users"),sn=>{D.users=sn.docs.map(d=>({id:d.id,...d.data()}));render()},fail));unsubs.push(FB.onSnapshot(FB.query(FB.collection(FB.fs,"audit"),FB.orderBy("at","desc"),FB.limit(300)),sn=>{D.audit=sn.docs.map(d=>({id:d.id,...d.data()}));render()},fail))}
   render();
  }catch(e){screen(`<h1>Could not start</h1><p class="al bad">${esc(e.code||e.message)}</p><button class="btn g" onclick="FB.signOut(FB.auth)">Sign out</button>`)}
@@ -692,10 +916,10 @@ let lastToday=td();setInterval(()=>{const t=td();if(t!==lastToday){if(day===last
 </script><script type="module">
 import {initializeApp,deleteApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {initializeFirestore,collection,doc,setDoc,getDoc,deleteDoc,addDoc,onSnapshot,writeBatch,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {initializeFirestore,where,collection,doc,setDoc,getDoc,deleteDoc,addDoc,onSnapshot,writeBatch,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyCLMqkOHYVfQ46WhneemEmWYuHAhn53cxM",authDomain:"lr-operations-dashboard.firebaseapp.com",projectId:"lr-operations-dashboard",storageBucket:"lr-operations-dashboard.firebasestorage.app",messagingSenderId:"612748907031",appId:"1:612748907031:web:063fe84c52cd1335570252"};
 const app=initializeApp(cfg);
-window.FB={cfg,app,auth:getAuth(app),fs:initializeFirestore(app,{experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true}),initializeApp,deleteApp,getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,collection,doc,setDoc,getDoc,deleteDoc,addDoc,onSnapshot,writeBatch,query,orderBy,limit};
+window.FB={cfg,app,auth:getAuth(app),fs:initializeFirestore(app,{experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true}),initializeApp,deleteApp,getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut,collection,doc,setDoc,getDoc,deleteDoc,addDoc,onSnapshot,writeBatch,query,orderBy,limit,where};
 window.dispatchEvent(new Event("fb-ready"));
 </script>
 </body></html>
