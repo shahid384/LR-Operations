@@ -172,10 +172,11 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 #mt-root .prog{min-width:100%}
 #mt-root .tools{width:100%}}
 #mt-root .sw0{display:flex;gap:6px;align-items:center}
+#mt-root .pill.red{background:var(--m-redL);color:var(--m-red)}#mt-root .row.bad{box-shadow:inset 4px 0 0 var(--m-red)}#mt-root .sst.badt{color:var(--m-red)}#mt-root .c.tdr{background:var(--m-redL);color:var(--m-red);border:2px dashed var(--m-red)}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
-const APP_VERSION="2026-11-13.1";
+const APP_VERSION="2026-11-13.2";
 let lastSnap=0,netOk=navigator.onLine,snapErr="";
 const syncHtml=()=>netOk&&!snapErr?`<span style="color:var(--pri)">● Live</span> · ${lastSnap?new Date(lastSnap).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"connecting"}`:`<span style="color:var(--red)">● ${netOk?"Sync problem":"Offline"}</span>`;
 const paintSync=()=>{const e=document.getElementById("sync");if(e)e.innerHTML=syncHtml()+" · v"+APP_VERSION};
@@ -424,6 +425,7 @@ function home(){
  if(carried().length)al.push(["warn",`${carried().length} unfinished task(s) carried over from earlier days`]);
  const stale=byDay("tasks").filter(t=>t.status!=="Completed"&&Date.now()-(t.updatedAt||t.createdAt||0)>864e5);if(stale.length)al.push(["warn",`${stale.length} task(s) not updated in over a day: `+stale.slice(0,3).map(t=>esc(t.title)).join(", ")]);
  const una=byDay("tasks").filter(t=>!(t.owners||[]).length);if(una.length)al.push(["bad",`${una.length} task(s) not assigned to anyone yet`]);
+ if(day===td()&&(canClose||ME.mt)&&(MTCFG.mgrs||[]).length){const mi=MT.incomplete();if(mi.length)al.push(["bad","Management follow ups not completed today: "+mi.join(", ")])}
  if(!al.length)al.push(["ok","No alerts for this day"]);
  return `<div class="grid">${card("Daily sales target",inr(TARGET))}${card("Actual sales",inr(sales),`<div class="bar"><i style="width:${pct}%"></i></div><div class="l">${pct.toFixed(0)}% of target</div>`)}${card("Amount collected",inr(coll))}${card("Pending collections",`<span style="color:${pend?"var(--red)":"inherit"}">${inr(pend)}</span>`)}${card("Total procurement",inr(proc),`<div class="bar ${proc>FUND?"r":""}"><i style="width:${fp}%"></i></div><div class="l">Fund limit ${inr(FUND)}</div>`)}${card("Tasks completed",done)}${card("Tasks pending",open)}${card("Carried over",carried().length,'<div class="l">Unfinished from earlier days</div>')}${card("Delayed tasks",`<span style="color:${dl?"var(--red)":"inherit"}">${dl}</span>`)}${card("Closing stock value",inr(svv))}${card("Wastage value",inr(wv))}${card("Closing cash",inr(cr.close))}</div><h3>Alerts</h3>${al.map(a=>`<div class="al ${a[0]==="ok"?"ok":a[0]==="bad"?"bad":""}">${a[1]}</div>`).join("")}`;
 }
@@ -766,11 +768,12 @@ const SKEL="<div id=\"mt-root\"><header class=\"mtop\"><nav aria-label=\"Pages\"
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const iso=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
-let mgrs=[],staff=[],deleg=[],bills=[],txt={},pay={date:"",amt:""},assignee="",range=7,mtTab="tasks",dirty=false,timer;
+let sinceW=false,mgrs=[],staff=[],deleg=[],bills=[],txt={},pay={date:"",amt:""},assignee="",range=7,mtTab="tasks",dirty=false,timer;
+const STRICT=new Set(["rev_acc","rev_ops","rev_adm","fnotes"]);
 const so={},open=new Set(),pend={},mn=m=>(m.name||"").trim()||"Unnamed";
 const slug=s=>vk(s).replace(/[^a-z0-9]+/g,"-");
 const effWho=(k,id)=>{const w=((MTCFG.who||{})[k]||{})[id];return w!==undefined?w:k!=="proc"};
-const T=()=>[{id:"strategy",name:"Strategy call",keys:["strategy"]},{id:"deleg",name:"Delegation",keys:deleg.map(i=>"deleg_"+i)},{id:"sales",name:"Sales goal",keys:["sales"]},{id:"fin",name:"Finance review",keys:["bills","pay","day"]},{id:"proc",name:"Procurement",keys:["proc"]},{id:"follow",name:"Payment follow up",keys:["follow"]}];
+const T=()=>[{id:"strategy",name:"Strategy call",keys:["strategy"]},{id:"deleg",name:"Delegation",keys:deleg.map(i=>"deleg_"+i)},{id:"sales",name:"Sales goal",keys:["sales"]},{id:"fin",name:"Finance review",keys:["bills","pay","day"]},{id:"proc",name:"Procurement",keys:["proc"]},{id:"follow",name:"Payment follow up",keys:["follow"]},{id:"review",name:"Follow up review",keys:["rev_acc","rev_ops","rev_adm"],strict:true},{id:"notes",name:"Follow up notes and reminders",keys:["fnotes"],strict:true}];
 const chosen=k=>mgrs.filter(m=>so[k].who[m.id]),done=k=>chosen(k).filter(m=>so[k].tick[m.id]).length;
 const tot=t=>t.keys.reduce((a,k)=>a+chosen(k).length,0),dn=t=>t.keys.reduce((a,k)=>a+done(k),0);
 const canTick=m=>{if(!mgmt)return false;const me=mgrs.filter(x=>vk(mn(x))===vk(ME.name)||vk(mn(x))===vk(myMem()));return me.length?me.includes(m):true};
@@ -781,16 +784,17 @@ function sync(){
  txt={...(dy.txt||{}),...pend};pay={date:(dy.pay&&dy.pay.date)||iso(d3),amt:(dy.pay&&dy.pay.amt)||""};assignee=dy.assignee||"";
  for(const k in so)delete so[k];
  T().forEach(t=>t.keys.forEach(k=>{so[k]={who:{},tick:{}};mgrs.forEach(m=>{so[k].who[m.id]=effWho(k,m.id);so[k].tick[m.id]=!!((tk.tick||{})[k]||{})[m.id]})}));
+ if(mgmt&&MTCFG.mgrs&&!sinceW){const mm={};T().forEach(t=>{if(t.strict&&!(MTCFG.since||{})[t.id])mm[t.id]=td()});if(Object.keys(mm).length){sinceW=true;W("mtcfg","main",{since:mm})}}
 }
 /* ---------- tasks page ---------- */
 function signoff(k){
- const c=chosen(k),d=done(k),o=open.has(k),st=!c.length?"No one needs to tick this":d===c.length?"Completed":d+" of "+c.length+" ticked";
- return `<div class="so"><div class="lbl">Management sign-off</div><div class="chips">${c.map(m=>`<label class="chip"><input type="checkbox" data-act="tick" data-k="${k}" data-m="${m.id}" ${so[k].tick[m.id]?"checked":""} ${canTick(m)?"":"disabled"}>${esc(mn(m))}</label>`).join("")}</div><div class="sst ${c.length&&d===c.length?"okt":""}">${st}</div><button type="button" class="lk" data-act="open" data-k="${k}" aria-expanded="${o}">Choose who ticks</button>${o?`<div class="panel" role="group" aria-label="Who ticks">${mgrs.map(m=>`<label class="sw"><input type="checkbox" role="switch" data-act="who" data-k="${k}" data-m="${m.id}" ${so[k].who[m.id]?"checked":""} ${mgmt?"":"disabled"}><span>${esc(mn(m))}</span></label>`).join("")}</div>`:""}</div>`;
+ const c=chosen(k),d=done(k),o=open.has(k),st=!c.length?(STRICT.has(k)?"Choose who ticks: nobody can complete this yet":"No one needs to tick this"):d===c.length?"Completed":d+" of "+c.length+" ticked";
+ return `<div class="so"><div class="lbl">Management sign-off</div><div class="chips">${c.map(m=>`<label class="chip"><input type="checkbox" data-act="tick" data-k="${k}" data-m="${m.id}" ${so[k].tick[m.id]?"checked":""} ${canTick(m)?"":"disabled"}>${esc(mn(m))}</label>`).join("")}</div><div class="sst ${c.length&&d===c.length?"okt":STRICT.has(k)?"badt":""}">${st}</div><button type="button" class="lk" data-act="open" data-k="${k}" aria-expanded="${o}">Choose who ticks</button>${o?`<div class="panel" role="group" aria-label="Who ticks">${mgrs.map(m=>`<label class="sw"><input type="checkbox" role="switch" data-act="who" data-k="${k}" data-m="${m.id}" ${so[k].who[m.id]?"checked":""} ${mgmt?"":"disabled"}><span>${esc(mn(m))}</span></label>`).join("")}</div>`:""}</div>`;
 }
 const part=(h,k)=>`<div class="part"><div class="in">${h}</div>${signoff(k)}</div>`;
-const ta=(k,l,ph)=>`<label class="fl" for="x-${k}">${l}</label><textarea id="x-${k}" data-t="${k}" placeholder="${ph}">${esc(txt[k]||"")}</textarea>`;
+const ta=(k,l,ph,h)=>`<label class="fl" for="x-${k}">${l}</label>${h?`<div class="sst" style="margin:0 0 6px">${h}</div>`:""}<textarea id="x-${k}" data-t="${k}" placeholder="${ph}">${esc(txt[k]||"")}</textarea>`;
 function row(t){
- const n=tot(t),d=dn(t),pill=n===0?`<span class="pill">Notes only</span>`:d===n?`<span class="pill ok">Completed</span>`:`<span class="pill">${d} of ${n} ticked</span>`;
+ const n=tot(t),d=dn(t),bad=t.strict&&(n===0||d<n),pill=n===0?(t.strict?`<span class="pill red">No one chosen</span>`:`<span class="pill">Notes only</span>`):d===n?`<span class="pill ok">Completed</span>`:`<span class="pill ${t.strict?"red":""}">${t.strict?"Not completed · ":""}${d} of ${n} ticked</span>`;
  let b="";
  if(t.id==="strategy")b=part(ta("strategy","Agenda and decisions","What was discussed and decided on the call"),"strategy");
  if(t.id==="deleg"){
@@ -802,7 +806,9 @@ function row(t){
  if(t.id==="fin")b=part(`<div class="fl">Bill status</div><ul class="bills">${bills.map((x,i)=>`<li><span>${esc(x.n)}</span><select data-b="${i}" ${mgmt?"":"disabled"} aria-label="Status of ${esc(x.n)}">${["Pending","Approved","Paid"].map(o=>`<option ${x.s===o?"selected":""}>${o}</option>`).join("")}</select>${mgmt?`<button type="button" class="lk" data-act="rmbill" data-b="${i}" aria-label="Remove ${esc(x.n)}">Remove</button>`:""}</li>`).join("")}</ul>${mgmt?`<div class="add"><input id="billn" aria-label="New bill name" placeholder="Add a bill, for example vendor and month" style="padding:11px 14px;border:1px solid var(--m-line);border-radius:12px;background:var(--m-inp);color:inherit;font:inherit"><button type="button" class="btn" data-act="addbill">Add bill</button></div>`:""}`,"bills")+part(ta("pay","Payment planning","What gets paid, how much, from which account")+`<div class="two"><input type="date" data-p="date" aria-label="Pay on date" value="${pay.date}"><input type="number" min="0" inputmode="decimal" data-p="amt" aria-label="Amount" placeholder="Amount" value="${esc(pay.amt)}"></div>`,"pay")+part(ta("day","Day book","Entries to fix, gaps, notes"),"day");
  if(t.id==="proc")b=part(ta("proc","What needs to be bought","Items, quantity, supplier, needed by"),"proc");
  if(t.id==="follow")b=part(ta("follow","Who owes us and what was said","Party, amount, last contact, promised date"),"follow");
- return `<article class="row"><div><h2>${t.name}</h2>${pill}</div><div>${b}</div></article>`;
+ if(t.id==="review")b=part(ta("rev_acc","Account team","What was followed up and what is still pending","Purchase, sales, expenses"),"rev_acc")+part(ta("rev_ops","Operations","What was followed up and what is still pending","Old stock, prior orders, expectations, prices"),"rev_ops")+part(ta("rev_adm","Admin","Summary of the past day","Summary from the past day"),"rev_adm");
+ if(t.id==="notes")b=part(ta("fnotes","Notes and reminders","Notes to remember and reminders to act on"),"fnotes");
+ return `<article class="row ${bad?"bad":""}"><div><h2>${t.name}</h2>${pill}</div><div>${b}</div></article>`;
 }
 function renderTasks(){
  const tt=T(),N=tt.reduce((a,t)=>a+tot(t),0),D=tt.reduce((a,t)=>a+dn(t),0),p=N?D/N*100:0;
@@ -814,27 +820,28 @@ const dayRec=(arr,ds)=>arr.find(x=>x.date===ds)||{};
 function cell(t,ti,off){
  const d=new Date();d.setDate(d.getDate()-off);const ds=iso(d),tk=dayRec(D.mtticks,ds),dy=dayRec(D.mtdays,ds);
  const keys=off===0?t.keys:[...new Set([...t.keys,...(t.id==="deleg"?Object.keys(tk.tick||{}).filter(k=>k.startsWith("deleg_")):[])])];
+ const sn=(MTCFG.since||{})[t.id]||(t.strict?td():"");if(t.strict&&ds<sn)return{s:"note",T:0,note:false};
  let n=0,k2=0;
  keys.forEach(k=>mgrs.forEach(m=>{const sw=off===0?undefined:((tk.who||{})[k]||{})[m.id],w=sw!==undefined?sw:effWho(k,m.id);if(w){n++;if(((tk.tick||{})[k]||{})[m.id])k2++}}));
- if(n===0)return{s:"note",T:0,note:keys.some(k=>((off===0?txt:dy.txt||{})[k]||"").trim())};
- if(off===0)return{s:k2===n?"ok":"td",k:k2,T:n};
- return{s:k2===n?"ok":k2===0?"no":"some",k:k2,T:n};
+ if(n===0)return t.strict?{s:"no",k:0,T:0}:{s:"note",T:0,note:keys.some(k=>((off===0?txt:dy.txt||{})[k]||"").trim())};
+ if(off===0)return{s:k2===n?"ok":(t.strict?"tdr":"td"),k:k2,T:n};
+ return{s:k2===n?"ok":(k2===0||t.strict)?"no":"some",k:k2,T:n};
 }
 function renderDash(){
  const ds=[];for(let i=range-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);ds.push({off:i,d})}
  const rows=T().map((t,ti)=>({t,c:ds.map(x=>cell(t,ti,x.off))}));
- const per=ds.map((x,j)=>{const tr=rows.filter(r=>r.c[j].T>0);return{n:tr.filter(r=>r.c[j].s==="ok").length,m:tr.length}});
+ const per=ds.map((x,j)=>{const tr=rows.filter(r=>r.c[j].s!=="note");return{n:tr.filter(r=>r.c[j].s==="ok").length,m:tr.length}});
  const N=per.reduce((a,p)=>a+p.n,0),M=per.reduce((a,p)=>a+p.m,0),pc=M?Math.round(N/M*100):0;
  const f=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
  const when=range===1?"today":range===7?"this week":"in the past 30 days";
  const tdc=x=>x.off===0?"tdy":"";
- const body=c=>c.s==="note"?(c.note?`<div class="c nt">${range===30?"Note":"Note added"}</div>`:`<div class="c dash">—</div>`):`<div class="c ${c.s}">${c.s==="ok"?"✓ ":""}${c.k}/${c.T}</div>`;
+ const body=c=>c.s==="note"?(c.note?`<div class="c nt">${range===30?"Note":"Note added"}</div>`:`<div class="c dash">—</div>`):`<div class="c ${c.s}">${c.s==="ok"?"✓ ":""}${c.T?c.k+"/"+c.T:"No one chosen"}</div>`;
  $("#dash").innerHTML=`<div class="head"><div><h1 id="h-dash">Dashboard</h1><p class="sub">Task tracker · ${f(ds[0].d)}${ds.length>1?" to "+f(ds[ds.length-1].d):""}</p></div><div class="seg" role="group" aria-label="Date range">${[[1,"Today"],[7,"Past 7 days"],[30,"30 days"]].map(([v,l])=>`<button type="button" data-r="${v}" aria-pressed="${range===v}">${l}</button>`).join("")}</div></div>
  <div class="strip"><div class="sl"><b>${N} of ${M} task days completed ${when}</b><div class="bar" role="progressbar" aria-label="Completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pc}"><i style="width:${pc}%"></i></div></div><ul class="lg"><li><i class="sq ok"></i>All ticked</li><li><i class="sq some"></i>Some ticked</li><li><i class="sq no"></i>None ticked</li><li><i class="sq td"></i>Today, pending</li><li><i class="sq nt"></i>Notes only</li></ul></div>
  <div class="grid ${range===30?"cmp":""}"><table><thead><tr><th class="tk">Task</th>${ds.map(x=>`<th class="${tdc(x)}"><div>${x.d.toLocaleDateString("en-GB",{weekday:"short"})}</div><div class="dn">${x.d.getDate()}</div>${x.off===0?'<div class="tl">Today</div>':""}</th>`).join("")}<th>${range===1?"Today":range+" days"}</th></tr></thead><tbody>
  ${rows.map(r=>{const dd=r.c.filter(c=>c.s==="ok").length;return `<tr><th scope="row" class="tk">${r.t.name}</th>${r.c.map((c,j)=>`<td class="${tdc(ds[j])}">${body(c)}</td>`).join("")}<td class="rt">${r.c.every(c=>c.s==="note")?'<span class="sst">Notes only</span>':`${dd} of ${ds.length} days done<div class="bar sm"><i style="width:${dd/ds.length*100}%"></i></div>`}</td></tr>`}).join("")}
  <tr class="ft"><th scope="row" class="tk">Tasks done</th>${per.map((p,j)=>`<td class="${tdc(ds[j])}"><b>${p.n} of ${p.m}</b><div class="bar sm" style="margin:6px 8px 0"><i style="width:${p.m?p.n/p.m*100:0}%"></i></div></td>`).join("")}<td class="pc">${pc}%</td></tr></tbody></table></div>
- <p class="note">Each cell shows management ticks for that day, for example 3/4 means three of four ticks done. Notes only tasks have no ticks to track.</p>`;
+ <p class="note">Each cell shows management ticks for that day, for example 3/4 means three of four ticks done. Notes only tasks have no ticks to track. Everyday follow up tasks turn red whenever they are not fully ticked.</p>`;
 }
 /* ---------- wiring into the app ---------- */
 function renderAll(){const a=document.activeElement,d=a&&a.dataset?{...a.dataset}:{};renderTasks();renderDash();if(d.act&&d.k){const n=document.querySelector(`#mt-root [data-act="${d.act}"][data-k="${d.k}"]`+(d.m?`[data-m="${d.m}"]`:""));if(n)n.focus()}}
@@ -869,7 +876,8 @@ function wire(){
 window.MT={show(m){if(!m.querySelector("#mt-root")){m.innerHTML=SKEL;wire()}this.render(true)},
  render(force){const r=document.getElementById("mt-root");if(!r)return;sync();const a=document.activeElement;
   if(!force&&a&&r.contains(a)&&!a.closest("dialog")&&a.matches("textarea,input[type=text],input[type=number],input[type=date],select")){dirty=true;return}
-  dirty=false;renderAll()}};
+  dirty=false;renderAll()},
+ incomplete(){sync();return T().filter(t=>t.strict&&(tot(t)===0||dn(t)<tot(t))).map(t=>t.name)}};
 })();
 function stopAll(){unsubs.forEach(f=>f());unsubs=[];MTCFG={};seedMT=false;Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
