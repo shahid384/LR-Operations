@@ -172,11 +172,11 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 #mt-root .prog{min-width:100%}
 #mt-root .tools{width:100%}}
 #mt-root .sw0{display:flex;gap:6px;align-items:center}
-#mt-root .pill.red{background:var(--m-redL);color:var(--m-red)}#mt-root .row.bad{box-shadow:inset 4px 0 0 var(--m-red)}#mt-root .sst.badt{color:var(--m-red)}#mt-root .sq.tdr{border:1.5px dashed var(--m-red)}#mt-root #mtalert{padding:12px 16px;border-radius:12px;margin-bottom:16px;font-weight:700}#mt-root #mtalert.bad{background:var(--m-redL);color:var(--m-red)}#mt-root #mtalert.good{background:var(--m-okL);color:var(--m-ok)}#mt-root .c.tdr{background:var(--m-redL);color:var(--m-red);border:2px dashed var(--m-red)}
+#mt-root .pill.red{background:var(--m-redL);color:var(--m-red)}#mt-root .row.bad{box-shadow:inset 4px 0 0 var(--m-red)}#mt-root .sst.badt{color:var(--m-red)}#mt-root .byl{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--m-mut)}#mt-root .byl:empty{display:none}#mt-root .sq.tdr{border:1.5px dashed var(--m-red)}#mt-root #mtalert{padding:12px 16px;border-radius:12px;margin-bottom:16px;font-weight:700}#mt-root #mtalert.bad{background:var(--m-redL);color:var(--m-red)}#mt-root #mtalert.good{background:var(--m-okL);color:var(--m-ok)}#mt-root .c.tdr{background:var(--m-redL);color:var(--m-red);border:2px dashed var(--m-red)}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
-const APP_VERSION="2026-11-13.3";
+const APP_VERSION="2026-11-13.4";
 let lastSnap=0,netOk=navigator.onLine,snapErr="";
 const syncHtml=()=>netOk&&!snapErr?`<span style="color:var(--pri)">● Live</span> · ${lastSnap?new Date(lastSnap).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"connecting"}`:`<span style="color:var(--red)">● ${netOk?"Sync problem":"Offline"}</span>`;
 const paintSync=()=>{const e=document.getElementById("sync");if(e)e.innerHTML=syncHtml()+" · v"+APP_VERSION};
@@ -768,7 +768,7 @@ const SKEL="<div id=\"mt-root\"><header class=\"mtop\"><nav aria-label=\"Pages\"
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const iso=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
-let sinceW=false,mgrs=[],staff=[],deleg=[],bills=[],txt={},pay={date:"",amt:""},assignee="",range=7,mtTab="tasks",dirty=false,timer;
+let sinceW=false,mgrs=[],staff=[],deleg=[],bills=[],txt={},by={},pay={date:"",amt:""},assignee="",range=7,mtTab="tasks",dirty=false,timer;
 const so={},open=new Set(),pend={},mn=m=>(m.name||"").trim()||"Unnamed";
 const slug=s=>vk(s).replace(/[^a-z0-9]+/g,"-");
 const effWho=(k,id)=>{const w=((MTCFG.who||{})[k]||{})[id];return w!==undefined?w:k!=="proc"};
@@ -780,7 +780,7 @@ function sync(){
  staff=D.team.map(t=>({id:slug(t.name),name:t.name})).sort((a,b)=>a.name.localeCompare(b.name));
  mgrs=(MTCFG.mgrs||[]).map(m=>({...m}));deleg=(MTCFG.deleg||[]).filter(i=>staff.some(s=>s.id===i));bills=MTCFG.bills||[];
  const ds=td(),dy=D.mtdays.find(x=>x.date===ds)||{},tk=D.mtticks.find(x=>x.date===ds)||{},d3=new Date();d3.setDate(d3.getDate()+3);
- txt={...(dy.txt||{}),...pend};pay={date:(dy.pay&&dy.pay.date)||iso(d3),amt:(dy.pay&&dy.pay.amt)||""};assignee=dy.assignee||"";
+ txt={...(dy.txt||{}),...pend};by=dy.by||{};pay={date:(dy.pay&&dy.pay.date)||iso(d3),amt:(dy.pay&&dy.pay.amt)||""};assignee=dy.assignee||"";
  for(const k in so)delete so[k];
  T().forEach(t=>t.keys.forEach(k=>{so[k]={who:{},tick:{}};mgrs.forEach(m=>{so[k].who[m.id]=effWho(k,m.id);so[k].tick[m.id]=!!((tk.tick||{})[k]||{})[m.id]})}));
  if(mgmt&&MTCFG.mgrs&&!sinceW){const mm={};T().forEach(t=>{if(t.isnew&&!(MTCFG.since||{})[t.id])mm[t.id]=td()});if(Object.keys(mm).length){sinceW=true;W("mtcfg","main",{since:mm})}}
@@ -790,14 +790,21 @@ function signoff(k){
  const c=chosen(k),d=done(k),o=open.has(k),st=!c.length?"No one needs to tick this":d===c.length?"Completed":d+" of "+c.length+" ticked";
  return `<div class="so"><div class="lbl">Management sign-off</div><div class="chips">${c.map(m=>`<label class="chip"><input type="checkbox" data-act="tick" data-k="${k}" data-m="${m.id}" ${so[k].tick[m.id]?"checked":""} ${canTick(m)?"":"disabled"}>${esc(mn(m))}</label>`).join("")}</div><div class="sst ${c.length&&d===c.length?"okt":c.length?"badt":""}">${st}</div><button type="button" class="lk" data-act="open" data-k="${k}" aria-expanded="${o}">Choose who ticks</button>${o?`<div class="panel" role="group" aria-label="Who ticks">${mgrs.map(m=>`<label class="sw"><input type="checkbox" role="switch" data-act="who" data-k="${k}" data-m="${m.id}" ${so[k].who[m.id]?"checked":""} ${mgmt?"":"disabled"}><span>${esc(mn(m))}</span></label>`).join("")}</div>`:""}</div>`;
 }
+function byLine(k){
+ const cur=pend[k]!==undefined?pend[k]:(txt[k]||"");if(!cur.trim())return "";
+ const o={...(by[k]||{})};if(pend[k]!==undefined)o[ME.uid]={name:ME.name,at:Date.now()};
+ const a=Object.values(o).filter(x=>x&&x.name).sort((p,q)=>p.at-q.at);if(!a.length)return "";
+ const n=a.map(x=>esc(x.name)),who=n.length>1?n.slice(0,-1).join(", ")+" and "+n[n.length-1]:n[0];
+ return "Written by "+who+" · last edit "+new Date(a[a.length-1].at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"});
+}
 const part=(h,k)=>`<div class="part"><div class="in">${h}</div>${signoff(k)}</div>`;
-const ta=(k,l,ph,h)=>`<label class="fl" for="x-${k}">${l}</label>${h?`<div class="sst" style="margin:0 0 6px">${h}</div>`:""}<textarea id="x-${k}" data-t="${k}" placeholder="${ph}">${esc(txt[k]||"")}</textarea>`;
+const ta=(k,l,ph,h)=>`<label class="fl" for="x-${k}">${l}</label>${h?`<div class="sst" style="margin:0 0 6px">${h}</div>`:""}<textarea id="x-${k}" data-t="${k}" placeholder="${ph}">${esc(txt[k]||"")}</textarea><div class="byl" data-for="${k}">${byLine(k)}</div>`;
 function row(t){
  const n=tot(t),d=dn(t),bad=n>0&&d<n,pill=n===0?`<span class="pill">Notes only</span>`:d===n?`<span class="pill ok">Completed</span>`:`<span class="pill red">Not completed · ${d} of ${n} ticked</span>`;
  let b="";
  if(t.id==="strategy")b=part(ta("strategy","Agenda and decisions","What was discussed and decided on the call"),"strategy");
  if(t.id==="deleg"){
-  b=deleg.map(i=>{const s=staff.find(x=>x.id===i);return part(`<div class="pn"><span class="av">${esc(s.name[0])}</span>${esc(s.name)}</div><textarea data-t="deleg_${i}" aria-label="What ${esc(s.name)} has been asked to do" placeholder="What this person has been asked to do">${esc(txt["deleg_"+i]||"")}</textarea>`,"deleg_"+i)}).join("");
+  b=deleg.map(i=>{const s=staff.find(x=>x.id===i);return part(`<div class="pn"><span class="av">${esc(s.name[0])}</span>${esc(s.name)}</div><textarea data-t="deleg_${i}" aria-label="What ${esc(s.name)} has been asked to do" placeholder="What this person has been asked to do">${esc(txt["deleg_"+i]||"")}</textarea><div class="byl" data-for="deleg_${i}">${byLine("deleg_"+i)}</div>`,"deleg_"+i)}).join("");
   const rest=staff.filter(s=>!deleg.includes(s.id));
   if(rest.length)b+=`<div class="add"><select id="addsel" aria-label="Staff member to add">${rest.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select><button type="button" class="btn" data-act="addstaff" ${mgmt?"":"disabled"}>Add person</button></div>`;
  }
@@ -848,7 +855,7 @@ function renderDash(){
 /* ---------- wiring into the app ---------- */
 function renderAll(){const a=document.activeElement,d=a&&a.dataset?{...a.dataset}:{};renderTasks();renderDash();if(d.act&&d.k){const n=document.querySelector(`#mt-root [data-act="${d.act}"][data-k="${d.k}"]`+(d.m?`[data-m="${d.m}"]`:""));if(n)n.focus()}}
 const W=(c,id,x)=>FB.setDoc(FB.doc(FB.fs,c,id),x,{merge:true}).catch(e=>toast("Could not save: "+(e.code||e.message)));
-function flush(){const ds=td();Object.keys(pend).forEach(k=>{const v=pend[k];delete pend[k];W("mtdays",ds,{date:ds,txt:{[k]:v}})})}
+function flush(){const ds=td();Object.keys(pend).forEach(k=>{const v=pend[k];delete pend[k];W("mtdays",ds,{date:ds,txt:{[k]:v},by:{[k]:{[ME.uid]:{name:ME.name,at:Date.now()}}}})})}
 function renderMd(){$("#mlist").innerHTML=mgrs.map(m=>`<li><input data-mid="${m.id}" aria-label="Manager name" value="${esc(m.name)}"><button type="button" class="btn" data-rm="${m.id}" ${mgrs.length<2?"disabled":""}>Remove</button></li>`).join("")}
 function tab(w){mtTab=w;$("#p-tasks").hidden=w!=="tasks";$("#p-dash").hidden=w!=="dash";$("#b-tasks").setAttribute("aria-current",w==="tasks"?"page":"false");$("#b-dash").setAttribute("aria-current",w==="dash"?"page":"false");if(w==="dash")renderDash()}
 function wire(){
@@ -859,7 +866,7 @@ function wire(){
   else if(d.b!==undefined)W("mtcfg","main",{bills:bills.map((x,i)=>i==d.b?{...x,s:t.value}:x)});
   else if(d.a)W("mtdays",ds,{date:ds,assignee:t.value});
   else if(d.p)W("mtdays",ds,{date:ds,pay:{[d.p]:t.value}})});
- tk.addEventListener("input",e=>{const d=e.target.dataset;if(d.t){pend[d.t]=e.target.value;clearTimeout(timer);timer=setTimeout(flush,700)}});
+ tk.addEventListener("input",e=>{const d=e.target.dataset;if(d.t){pend[d.t]=e.target.value;const bl=document.querySelector('#mt-root .byl[data-for="'+d.t+'"]');if(bl)bl.innerHTML=byLine(d.t);clearTimeout(timer);timer=setTimeout(flush,700)}});
  r.addEventListener("focusout",()=>{flush();if(dirty)setTimeout(()=>MT.render(),120)});
  tk.addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const a=b.dataset.act;
   if(a==="open"){open.has(b.dataset.k)?open.delete(b.dataset.k):open.add(b.dataset.k);renderAll()}
