@@ -188,10 +188,40 @@ tbody tr:hover td,tr:hover>td{background:#fcfbf8}tr:last-child td{border-bottom:
 #mt-root .tl2{margin:6px 0 0;padding-left:18px;color:var(--m-mut);font-weight:600}
 #mt-root button.c{border:0;width:100%;font-family:inherit;cursor:pointer}#mt-root button.c:hover{filter:brightness(.97)}
 @media (max-width:760px){#mt-root .mgr{grid-template-columns:1fr 1fr}#mt-root .row{padding:20px}#mt-root .mtsearch{width:100%}}#mt-root .sq.tdr{border:1.5px dashed var(--m-red)}#mt-root #mtalert{padding:12px 16px;border-radius:12px;margin-bottom:16px;font-weight:700}#mt-root #mtalert.bad{background:var(--m-redL);color:var(--m-red)}#mt-root #mtalert.good{background:var(--m-okL);color:var(--m-ok)}#mt-root .c.tdr{background:var(--m-redL);color:var(--m-red);border:2px dashed var(--m-red)}
+
+/* ===== Premium theme ===== */
+:root{--bg:#f5f3ee;--card:#fff;--tx:#18231e;--mut:#6f7c75;--line:#e6e2d8;--pri:#14573f;--priD:#0d3d2c;--priL:#e5f0ea;--gold:#b08d4e;--goldL:#f6efe0;--red:#b0392e;--redL:#fbece9;--amb:#98630f;--ambL:#faf1de;--blu:#34557d;--bluL:#ebf0f6;--r:14px;--rl:20px;--sh:0 1px 2px rgba(20,35,28,.05),0 12px 28px -16px rgba(20,35,28,.18);--sh2:0 2px 4px rgba(20,35,28,.06),0 22px 44px -20px rgba(20,35,28,.28);--ease:cubic-bezier(.2,.7,.2,1)}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:radial-gradient(1100px 480px at 100% -8%,#ebe6d8 0,transparent 62%),var(--bg);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:var(--priL);color:var(--priD)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+nav{background:linear-gradient(180deg,#fff,#fbfaf6);box-shadow:1px 0 0 var(--line);border-right:0}
+nav h1{color:var(--priD)}nav h1 small{color:var(--gold)}
+nav button{border-radius:12px;transition:background .18s var(--ease),color .18s,transform .18s var(--ease)}nav button:hover{transform:translateX(2px)}
+nav button.on{background:linear-gradient(90deg,var(--priL),#f2f8f4);color:var(--priD);box-shadow:inset 3px 0 0 var(--gold)}
+.who{border-top-color:var(--line)}
+.top h2{font-weight:500;letter-spacing:-.02em}
+input,select,textarea{border-radius:12px;background:#fcfbf8;border:1px solid var(--line);transition:border-color .15s,box-shadow .15s,background .15s}
+input:hover,select:hover,textarea:hover{border-color:#d3cebf}
+input:focus,select:focus,textarea:focus{background:#fff;border-color:var(--pri);box-shadow:0 0 0 4px rgba(20,87,63,.12)}
+::placeholder{color:#a3aba6}
+.btn{background:linear-gradient(180deg,#1a6a4d,var(--pri));border:0;border-radius:12px;box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 8px 16px -8px rgba(20,87,63,.6);transition:transform .15s var(--ease),box-shadow .15s,filter .15s}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}.btn:active{transform:none}
+.btn.g{background:#fff;color:var(--tx);border:1px solid var(--line);box-shadow:var(--sh)}.btn.g.d{color:var(--red)}
+.card{border-radius:var(--rl);box-shadow:var(--sh);transition:transform .2s var(--ease),box-shadow .2s}.card:hover{box-shadow:var(--sh2)}
+.card .l{letter-spacing:.1em}.card .v{font-weight:500}
+.tw{border-radius:var(--rl);box-shadow:var(--sh)}th{background:#faf8f3;letter-spacing:.09em}tr:hover>td{background:#fcfbf8}
+.tag{font-weight:600}.form{border-radius:var(--rl);box-shadow:var(--sh)}.al{border-radius:14px}
+.bar i{background:linear-gradient(90deg,var(--pri),#2f8a67)}.bar.r i{background:linear-gradient(90deg,var(--red),#d8685c)}
+h3{color:var(--gold);letter-spacing:.14em}
+.selcard{border-radius:18px;background:rgba(255,255,255,.95);backdrop-filter:blur(8px)}
+#toast{border-radius:12px;box-shadow:var(--sh2)}
+.login h1{color:var(--priD)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style></head><body>
 <div class="app"><nav id="nav"></nav><main id="main"><p class="mut">Loading…</p></main></div><div id="selbar"></div>
 <script>
-const APP_VERSION="2026-11-13.5";
+const APP_VERSION="2026-11-14.1";
 let lastSnap=0,netOk=navigator.onLine,snapErr="";
 const syncHtml=()=>netOk&&!snapErr?`<span style="color:var(--pri)">● Live</span> · ${lastSnap?new Date(lastSnap).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"connecting"}`:`<span style="color:var(--red)">● ${netOk?"Sync problem":"Offline"}</span>`;
 const paintSync=()=>{const e=document.getElementById("sync");if(e)e.innerHTML=syncHtml()+" · v"+APP_VERSION};
@@ -212,7 +242,7 @@ function notesHtml(t){
  const old=[t.remarks,t.result&&"Result: "+t.result].filter(Boolean).join(" | ");
  return (u.length>2?`<div class="mut sm">${u.length-2} earlier update(s)</div>`:"")+u.slice(-2).map(one).join("")+(old?`<div class="mut sm">${esc(old)}</div>`:"");
 }
-const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[],mtdays:[],mtticks:[]},loaded={};
+const D={tasks:[],proc:[],sales:[],team:[],stock:[],cash:[],days:[],harvest:[],recurring:[],users:[],audit:[],mtdays:[],mtticks:[],accounts:[],cashacc:[]},loaded={};
 let MTCFG={},seedMT=false,bulk=false,brows=5,bpre=[],skipDraft=false,SEL=new Set(),VIS=[],asg=null,upd=null,fs="",fpn="",mine=false,db,ME={},ROLE="",mgmt=false,canClose=false,unsubs=[],genDone=false,seedDone=false,setNone=false,pendingName="",view="home",day=td(),editing=null,adding=false,q="",ready=false;
 function td(){const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -246,7 +276,7 @@ const COLS={
  harvest:[["Farm",r=>esc(r.farm)],["Variety",r=>esc(r.variety)],["Qty",r=>r.qty,1],["Cost/unit",r=>+r.rate>0?inr(r.rate):"—",1],["Note",r=>esc(r.note)]],
  recurring:[["Task",r=>`<b>${esc(r.title)}</b><div class="mut">${esc(r.desc)}</div>`],["Owners",r=>esc((r.owners||[]).join(", "))],["Category",r=>esc(r.cat||CATBYID[r.id]||"Other")],["Repeats",r=>esc(r.repeat||"Every day")],["By",r=>esc(r.time)],["Priority",r=>esc(r.priority)],["Active",r=>`<span class="tag ${r.active==="No"?"":"ok"}">${esc(r.active)}</span>`]],
  team:[["Name",r=>`<b>${esc(r.name)}</b>`],["Responsibility",r=>esc(r.role)]]};
-const carried=()=>day>=td()?D.tasks.filter(t=>t.date&&t.date<day&&t.status!=="Completed"&&!(t.recId&&D.tasks.some(x=>x.recId===t.recId&&x.date>t.date&&x.date<=day))):[];
+const carried=()=>day>=td()?D.tasks.filter(t=>t.date&&t.date<day&&t.status!=="Completed"&&!(t.recId&&D.tasks.some(x=>x.recId===t.recId&&x.date>t.date&&x.date<=day))&&!isStale(t)):[];
 const byDay=c=>c==="tasks"?[...D.tasks.filter(r=>!r.date||r.date===day||(r.completedOn===day&&r.status==="Completed")),...carried()]:D[c].filter(r=>!r.date||r.date===day);
 function addD(d,n){const x=new Date(d+"T00:00:00");x.setDate(x.getDate()+n);return new Date(x-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 function shift(n){day=addD(day,n);render()}
@@ -336,17 +366,37 @@ function cashRow(d){
  const opening=typeof c.opening==="number"?c.opening:auto,tr=+c.transport||0,ot=+c.other||0;
  return memo[k]={c,auto,opening,proc,coll,tr,ot,close:opening-proc+coll-tr-ot};
 }
+let acctOpen=false;
+const ACCT_TYPES=["Bank","Cash","UPI","Card","Other"];
+const accs=()=>D.accounts.filter(a=>a.active!==false).sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+const canAcc=a=>mgmt||(!!myMem()&&(a.updaters||[]).includes(myMem()));
+const accEntry=(a,d)=>D.cashacc.find(x=>x.acc===a.id&&x.date===d)||{};
+function accPrev(a,d){let b=null;D.cashacc.forEach(x=>{if(x.acc===a.id&&x.date<d&&(!b||x.date>b.date))b=x});if(!b)return 0;const o=typeof b.opening==="number"?b.opening:accPrev(a,b.date);return typeof b.closing==="number"?b.closing:o+(+b.income||0)-(+b.expenses||0)}
+function accRow(a,d){const e=accEntry(a,d),auto=accPrev(a,d),open=typeof e.opening==="number"?e.opening:auto,inc=+e.income||0,ex=+e.expenses||0,exp=open+inc-ex,has=typeof e.closing==="number";return{e,auto,open,inc,ex,exp,has,close:has?e.closing:exp,diff:has?e.closing-exp:0}}
+function cashAny(d){const A=accs();if(!A.length)return cashRow(d);const R=A.map(a=>accRow(a,d));return{opening:sum(R,r=>r.open),close:sum(R,r=>r.close),income:sum(R,r=>r.inc),exp:sum(R,r=>r.ex)}}
 function cashV(){
- const r=cashRow(day),inp=(f,ph)=>`<input type="number" step="any" min="0" style="width:140px" value="${typeof r.c[f]==="number"?r.c[f]:""}" placeholder="${ph}" onchange="saveCash('${f}',this.value)">`;
- return `<div class="grid">${kc("Opening cash",inr(r.opening))}${kc("Closing cash",`<span style="color:${r.close<0?"var(--red)":"inherit"}">${inr(r.close)}</span>`)}</div>
- <div class="tw"><table><tr><th>Item</th><th class="num">Amount</th></tr>
- <tr><td>Opening cash balance <span class="mut">(type to override)</span></td><td class="num">${inp("opening",n2(r.auto))}</td></tr>
- <tr><td>− Procurement payments <span class="mut">(from Procurement)</span></td><td class="num">${inr(r.proc)}</td></tr>
- <tr><td>+ Sales collections <span class="mut">(paid sales)</span></td><td class="num">${inr(r.coll)}</td></tr>
- <tr><td>− Transport expenses</td><td class="num">${inp("transport","0")}</td></tr>
- <tr><td>− Other expenses</td><td class="num">${inp("other","0")}</td></tr>
- <tr><td><b>Closing cash balance</b></td><td class="num"><b>${inr(r.close)}</b></td></tr></table></div>
- <p class="mut">Procurement is assumed paid in cash on the day it is recorded.</p>`;
+ const A=accs(),R=A.map(a=>accRow(a,day)),coll=sum(D.sales.filter(r=>r.date===day&&r.pay==="Paid"),val),inc=sum(R,r=>r.inc);
+ const cell=(a,f,v,ph)=>canAcc(a)?`<input type="number" step="any" style="width:128px" value="${typeof v==="number"?v:""}" placeholder="${n2(ph)}" onchange="saveAcc('${a.id}','${f}',this.value)">`:`<span>${inr(typeof v==="number"?v:ph)}</span>`;
+ return `<div class="grid">${kc("Opening balance",inr(sum(R,r=>r.open)))}${kc("Sales income",inr(inc),`<div class="l" style="text-transform:none;letter-spacing:0">Sales recorded in the app: ${inr(coll)}</div>`)}${kc("Expenses paid",inr(sum(R,r=>r.ex)))}${kc("Closing balance",`<span style="color:${sum(R,r=>r.close)<0?"var(--red)":"inherit"}">${inr(sum(R,r=>r.close))}</span>`)}</div>
+ ${mgmt?`<p><button class="btn g" onclick="acctOpen=!acctOpen;render()">${acctOpen?"Close":"Manage accounts"}</button></p>`:""}${acctOpen&&mgmt?acctPanel():""}
+ ${A.length?`<div class="tw"><table><tr><th>Account</th><th>Updated by</th><th class="num">Opening</th><th class="num">Sales income</th><th class="num">Expenses paid</th><th class="num">Expected closing</th><th class="num">Closing balance</th><th class="num">Difference</th></tr>
+ ${A.map((a,i)=>{const r=R[i];return `<tr><td><b>${esc(a.name)}</b><div class="mut sm">${esc(a.type||"")}${(a.updaters||[]).length?" · "+esc(a.updaters.join(", ")):""}</div></td><td class="mut sm">${r.e.by?esc(r.e.by)+"<br>"+new Date(r.e.at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"Not updated"}</td><td class="num">${cell(a,"opening",r.e.opening,r.auto)}</td><td class="num">${cell(a,"income",r.e.income,0)}</td><td class="num">${cell(a,"expenses",r.e.expenses,0)}</td><td class="num">${inr(r.exp)}</td><td class="num">${cell(a,"closing",r.e.closing,r.exp)}</td><td class="num">${r.has?`<span class="tag ${Math.abs(r.diff)>0.005?"bad":"ok"}">${n2(r.diff)}</span>`:'<span class="tag warn">not entered</span>'}</td></tr>`}).join("")}</table></div>
+ <p class="mut">Opening fills from the previous day's closing. Expected closing = opening + sales income − expenses paid. A difference means the bank balance you entered does not match.</p>`:`<div class="al">No accounts yet. ${mgmt?"Press Manage accounts to add your bank accounts.":"Management has not added any accounts."}</div>`}`;
+}
+function acctPanel(){const sel=id=>`<select id="${id}">${ACCT_TYPES.map(t=>`<option>${t}</option>`).join("")}</select>`;
+ return `<div class="form assignbox" id="acctbox"><b>Accounts</b> <span class="mut">Add each account you use, and tick who updates it every day.</span>
+ ${accs().map(a=>`<div class="fg" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><div><label>Account name</label><input value="${esc(a.name)}" onchange="accSet('${a.id}','name',this.value)"></div><div><label>Type</label><select onchange="accSet('${a.id}','type',this.value)">${ACCT_TYPES.map(t=>`<option ${a.type===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="w"><label>Can update every day</label><div class="chk">${names().map(n=>`<label><input type="checkbox" data-n="${esc(n)}" ${(a.updaters||[]).includes(n)?"checked":""} onchange="accUpd('${a.id}',this.dataset.n,this.checked)">${esc(n)}</label>`).join("")}</div></div><div><button class="btn g s d" onclick="accDel('${a.id}')">Remove account</button></div></div>`).join("")}
+ <div class="fg" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"><div><label>New account name</label><input id="na" placeholder="For example HDFC current account"></div><div><label>Type</label>${sel("nt")}</div><div style="align-self:end"><button class="btn" onclick="accAdd()">Add account</button></div></div></div>`}
+async function accW(id,fn){const a=D.accounts.find(x=>x.id===id);if(!a||!mgmt)return;const {id:_i,...o}=a;try{await db.collection("accounts").doc(id).set(fn(o))}catch(e){alert(e.code||e.message)}}
+const accSet=(id,f,v)=>accW(id,o=>({...o,[f]:v}));
+const accUpd=(id,n,on)=>accW(id,o=>({...o,updaters:[...new Set([...(o.updaters||[]).filter(x=>x!==n),...(on?[n]:[])])]}));
+const accDel=id=>{if(confirm("Remove this account from the list? Past entries are kept."))accW(id,o=>({...o,active:false}))};
+async function accAdd(){const n=document.getElementById("na").value.trim();if(!n)return alert("Type the account name first.");try{await db.collection("accounts").doc().set({name:n,type:document.getElementById("nt").value,updaters:[],active:true,createdAt:Date.now()});document.getElementById("na").value=""}catch(e){alert(e.code||e.message)}}
+async function saveAcc(id,f,v){
+ const a=D.accounts.find(x=>x.id===id);if(!a||!canAcc(a))return alert("You are not assigned to update this account.");
+ if(!mgmt&&isClosed(day))return alert("This day is closed.");
+ const {id:_i,...o}=accEntry(a,day);
+ try{await db.collection("cashacc").doc(day+"_"+id).set({...o,date:day,acc:id,[f]:v===""?"":+v,by:ME.name,at:Date.now()})}catch(e){alert(e.code||e.message)}
 }
 async function saveCash(f,v){
  if(!mgmt&&isClosed(day))return alert("This day is closed.");
@@ -354,7 +404,7 @@ async function saveCash(f,v){
  try{await db.collection("cash").doc(day).set({...o,date:day,[f]:v===""?"":+v})}catch(e){alert("Could not save: "+(e.message||e.code))}
 }
 function reviewV(){
- const s=D.sales.filter(r=>r.date===day),t=byDay("tasks"),rows=stockRows(day),cr=cashRow(day);
+ const s=D.sales.filter(r=>r.date===day),t=byDay("tasks"),rows=stockRows(day),cr=cashAny(day);
  const sales=sum(s,val),coll=sum(s.filter(r=>r.pay==="Paid"),val),pend=sales-coll,proc=sum(D.proc.filter(r=>r.date===day),val);
  const sv=sum(rows,r=>r.close*r.rate),wv=sum(rows,r=>r.waste*r.rate),done=t.filter(x=>x.status==="Completed").length,open=t.length-done;
  SNAP={sales,coll,pend,proc,stock:Math.round(sv),wastage:Math.round(wv),cash:Math.round(cr.close),done,open};
@@ -427,13 +477,15 @@ function home(){
  const sales=sum(s,val),coll=sum(s.filter(r=>r.pay==="Paid"),val),pend=sales-coll,proc=sum(p,val);
  const done=t.filter(x=>x.status==="Completed").length,dl=t.filter(isDelayed).length,open=t.length-done;
  const pct=Math.min(100,sales/TARGET*100),fp=Math.min(100,proc/FUND*100);
- const sr=stockRows(day),svv=sum(sr,r=>r.close*r.rate),wv=sum(sr,r=>r.waste*r.rate),cr=cashRow(day);
+ const sr=stockRows(day),svv=sum(sr,r=>r.close*r.rate),wv=sum(sr,r=>r.waste*r.rate),cr=cashAny(day);
  const card=(l,v,x="")=>`<div class="card"><div class="l">${l}</div><div class="v">${v}</div>${x}</div>`;
  const al=[];
  if(sales<TARGET)al.push(["warn",`Sales ${inr(sales)} are ${inr(TARGET-sales)} below the ${inr(TARGET)} target`]);
  if(pend>0)al.push(["bad",`${inr(pend)} not collected — Cash & Carry credit must stay at zero (${s.filter(r=>r.pay!=="Paid").map(r=>esc(r.buyer)).join(", ")})`]);
  if(proc>FUND){const pa=p.some(r=>r.approval==="pending");al.push([pa?"bad":"warn",`Procurement ${inr(proc)} exceeds the ${inr(FUND)} fund`+(pa?" — approval pending":" (approved by management)")])}
- D.tasks.filter(x=>overdue(x)).forEach(x=>al.push(["bad",`Overdue: ${esc(x.title)} (${esc((x.owners||[]).join(", "))})`]));
+ const ov=D.tasks.filter(x=>overdue(x)&&!isStale(x)),g={};ov.forEach(x=>{(g[x.title]=g[x.title]||[]).push(x)});
+ Object.keys(g).forEach(t=>al.push(["bad","Overdue: "+esc(t)+" ("+(esc([...new Set(g[t].flatMap(x=>x.owners||[]))].join(", "))||"unassigned")+")"+(g[t].length>1?" · "+g[t].length+" tasks":"")]));
+ const stl=D.tasks.filter(x=>isStale(x)&&x.status!=="Completed");if(stl.length)al.push(["warn",stl.length+" old unfinished copies of removed or replaced daily tasks are hidden. "+(mgmt?'<button class="btn s" onclick="cleanStale()">Delete them</button>':"")]);
  if(sr.some(r=>!r.has))al.push(["warn","Stock not reconciled: "+sr.filter(r=>!r.has).length+" variety(ies) have no physical count"]);
  if(sr.some(r=>r.has&&Math.abs(r.diff)>0.001))al.push(["bad","Stock difference found: "+sr.filter(r=>r.has&&Math.abs(r.diff)>0.001).map(r=>esc(r.name)).join(", ")]);
  if(wv>0)al.push(["warn","Wastage reported: "+inr(wv)]);
@@ -940,6 +992,8 @@ window.MT={show(m){if(!m.querySelector("#mt-root")){m.innerHTML=SKEL;wire()}this
  incomplete(){sync();return T().filter((t,i)=>{const c=cell(t,i,0);return c.T>0&&c.s!=="ok"}).map(t=>t.name)}};
 })();
 function nbadge(){const n=(canClose||ME.mt)&&(MTCFG.mgrs||[]).length?MT.incomplete().length:0;return n?`<span class="nbadge" title="Management tasks not completed today">${n}</span>`:""}
+const isStale=t=>!!t.recId&&((loaded.recurring&&!D.recurring.some(r=>r.id===t.recId))||(t.date<td()&&t.status!=="Completed"&&D.tasks.some(x=>x.recId===t.recId&&x.date>t.date)));
+async function cleanStale(){const st=D.tasks.filter(x=>isStale(x)&&x.status!=="Completed");if(!st.length||!confirm("Delete "+st.length+" old task copies? This cannot be undone."))return;const b=db.batch();st.forEach(x=>b.del("tasks",x.id));try{await b.commit("bulk delete","tasks",st.length+" old task copies");toast("Deleted "+st.length)}catch(e){alert(e.code||e.message)}}
 function stopAll(){unsubs.forEach(f=>f());unsubs=[];MTCFG={};seedMT=false;Object.keys(D).forEach(k=>D[k]=[]);Object.keys(loaded).forEach(k=>delete loaded[k]);genDone=seedDone=ready=false}
 function screen(h){const n=document.getElementById("nav");n.style.display="none";document.getElementById("main").innerHTML=`<div class="login">${h}</div>`}
 function loginScreen(){screen(`<h1>LR Farms</h1><p class="mut">Daily Operations · sign in</p><div class="form"><label>Email</label><input id="le" type="email" autocomplete="username"><label style="margin-top:10px;display:block">Password</label><input id="lp" type="password" autocomplete="current-password"><p><button class="btn" onclick="doLogin()">Sign in</button> <button class="btn g" onclick="doReset()">Forgot password</button></p><p id="lm" class="mut"></p></div><p class="mut"><a href="#" onclick="doFirst();return false">First-time setup: create the admin account</a></p>`)}
@@ -966,7 +1020,7 @@ async function start(u){
   const x=s.data();ME={uid:u.uid,name:x.name,email:u.email,member:x.member||"",mt:!!x.mt};ROLE=x.role;mgmt=ROLE==="management";canClose=mgmt||ROLE==="coordinator";mine=!canClose;
   db=mkdb();ready=true;document.getElementById("nav").style.display="";
   const fail=e=>{snapErr=e.code||e.message||"error";paintSync();document.getElementById("main").innerHTML='<p class="al bad">Data error: '+esc(e.code||e.message)+'. Check that the Firestore rules are published.</p>'};
-  ["tasks","proc","sales","team","stock","cash","days","harvest","recurring"].forEach(c=>unsubs.push(FB.onSnapshot(FB.collection(FB.fs,c),sn=>{D[c]=sn.docs.map(d=>({id:d.id,...d.data()}));loaded[c]=true;lastSnap=Date.now();snapErr="";after();render()},fail)));
+  ["tasks","proc","sales","team","stock","cash","days","harvest","recurring","accounts","cashacc"].forEach(c=>unsubs.push(FB.onSnapshot(FB.collection(FB.fs,c),sn=>{D[c]=sn.docs.map(d=>({id:d.id,...d.data()}));loaded[c]=true;lastSnap=Date.now();snapErr="";after();render()},fail)));
   unsubs.push(FB.onSnapshot(FB.doc(FB.fs,"settings","main"),sn=>{if(sn.exists()){TARGET=+sn.data().target||TARGET;FUND=+sn.data().fund||FUND}setNone=!sn.exists();loaded.settings=true;lastSnap=Date.now();snapErr="";after();render()},fail));
   if(canClose||x.mt){
    const from=addD(td(),-35),mfail=e=>toast("Management tasks unavailable: "+(e.code||e.message)+". Publish the new Firestore rules.");
